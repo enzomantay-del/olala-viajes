@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Reservas{% endblock %}
+{% block topbar_title %}Reservas{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2><i class="fas fa-plane-departure me-2 text-teal"></i>Reservas</h2>
+  <a href="{% url 'reserva_nueva' %}" class="btn btn-teal"><i class="fas fa-plus me-1"></i>Nueva reserva</a>
+</div>
+<div class="card">
+  <div class="card-body">
+    <form method="get" class="mb-3">
+      <div class="row g-2">
+        <div class="col-md-7">
+          <div class="input-group">
+            <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Buscar por nro., cliente, destino, nro. proveedor...">
+            <button class="btn btn-teal" type="submit"><i class="fas fa-search"></i></button>
+            {% if q or estado %}<a href="{% url 'reservas_lista' %}" class="btn btn-outline-secondary">Limpiar</a>{% endif %}
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select name="estado" class="form-select" onchange="this.form.submit()">
+            <option value="">— Todos los estados —</option>
+            {% for val, label in estados %}
+            <option value="{{ val }}" {% if estado == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </form>
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Nro.</th>
+            <th>Cliente</th>
+            <th>Destino</th>
+            <th>Servicios</th>
+            <th>Salida</th>
+            <th>Estado</th>
+            <th class="text-end">Venta</th>
+            <th class="text-end">Saldo cliente</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in reservas %}
+          <tr>
+            <td><a href="{% url 'reserva_detalle' r.pk %}" class="fw-bold text-decoration-none">{{ r.numero }}</a></td>
+            <td>{{ r.cliente }}</td>
+            <td class="small">{{ r.destino }}</td>
+            <td class="small">
+              {% for s in r.servicios.all %}
+              <span class="badge bg-secondary me-1" style="font-size:.65rem">{{ s.get_tipo_servicio_display }}</span>
+              {% empty %}<span class="text-muted">—</span>
+              {% endfor %}
+            </td>
+            <td class="small">{{ r.fecha_salida|date:"d/m/Y" }}</td>
+            <td><span class="badge badge-{{ r.estado }}">{{ r.get_estado_display }}</span></td>
+            <td class="text-end small">{{ r.moneda_venta }} {{ r.precio_venta|floatformat:2 }}</td>
+            <td class="text-end {% if r.saldo_pendiente_cliente > 0 %}saldo-pendiente{% else %}saldo-ok{% endif %}">
+              {% if r.saldo_pendiente_cliente > 0 %}{{ r.moneda_venta }} {{ r.saldo_pendiente_cliente|floatformat:2 }}{% else %}<i class="fas fa-check"></i>{% endif %}
+            </td>
+            <td class="text-center">
+              <a href="{% url 'reserva_detalle' r.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver"><i class="fas fa-eye"></i></a>
+              <a href="{% url 'reserva_editar' r.pk %}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="fas fa-edit"></i></a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="10" class="text-center text-muted py-4">No se encontraron reservas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

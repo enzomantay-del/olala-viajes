@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}{% if editando %}Editar cobro{% else %}Registrar cobro{% endif %}{% endblock %}
+{% block topbar_title %}{% if editando %}Editar cobro{% else %}Registrar cobro{% endif %}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card mb-3" style="border-left:4px solid var(--teal)">
+      <div class="card-body py-2">
+        <div class="small text-muted">Reserva</div>
+        <strong>{{ reserva.numero }}</strong> — {{ reserva.cliente }} — {{ reserva.destino }}
+        <div class="small mt-1">
+          Precio venta: <strong>{{ reserva.moneda_venta }} {{ reserva.precio_venta|floatformat:2 }}</strong> |
+          Cobrado: <strong class="text-success">{{ reserva.moneda_venta }} {{ reserva.total_cobrado|floatformat:2 }}</strong> |
+          Saldo: <strong class="{% if reserva.saldo_pendiente_cliente > 0 %}text-danger{% else %}text-success{% endif %}">{{ reserva.moneda_venta }} {{ reserva.saldo_pendiente_cliente|floatformat:2 }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-section">
+        <div class="form-section-title"><i class="fas fa-hand-holding-dollar me-2"></i>Datos del cobro</div>
+        <div class="row g-3">
+          <div class="col-md-4"><label class="form-label">Fecha *</label>{{ form.fecha }}</div>
+          <div class="col-md-4"><label class="form-label">Monto *</label>{{ form.monto }}</div>
+          <div class="col-md-4"><label class="form-label">Moneda *</label>{{ form.moneda }}</div>
+          <div class="col-md-6"><label class="form-label">Forma de pago *</label>{{ form.forma_pago }}</div>
+          <div class="col-md-6"><label class="form-label">Referencia / Nro. comprobante</label>{{ form.referencia }}</div>
+          <div class="col-12"><label class="form-label">Notas</label>{{ form.notas }}</div>
+        </div>
+      </div>
+      <div class="d-flex gap-2 justify-content-end">
+        <a href="{% url 'reserva_detalle' reserva.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-teal"><i class="fas fa-save me-1"></i>Guardar cobro</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

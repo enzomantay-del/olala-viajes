@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Recibos{% endblock %}
+{% block topbar_title %}Recibos{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2><i class="fas fa-receipt me-2 text-teal"></i>Recibos emitidos</h2>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Nro.</th><th>Fecha</th><th>Cliente</th><th>Cobros incluidos</th><th class="text-end">Total</th><th class="text-center">Acciones</th></tr></thead>
+      <tbody>
+        {% for r in recibos %}
+        <tr>
+          <td><strong>{{ r.numero }}</strong></td>
+          <td>{{ r.fecha|date:"d/m/Y" }}</td>
+          <td><a href="{% url 'cliente_detalle' r.cliente.pk %}">{{ r.cliente }}</a></td>
+          <td class="small">{{ r.cobros.count }} cobro{{ r.cobros.count|pluralize }}</td>
+          <td class="text-end">
+            {% for moneda, total in r.total_por_moneda.items %}
+            <div class="moneda-{{ moneda }}">{{ moneda }} {{ total|floatformat:2 }}</div>
+            {% endfor %}
+          </td>
+          <td class="text-center">
+            <a href="{% url 'recibo_detalle' r.pk %}" class="btn btn-sm btn-outline-secondary">Ver</a>
+            <a href="{% url 'recibo_pdf' r.pk %}" class="btn btn-sm btn-teal" target="_blank"><i class="fas fa-file-pdf"></i> PDF</a>
+            <a href="{% url 'recibo_eliminar' r.pk %}" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">No hay recibos emitidos.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

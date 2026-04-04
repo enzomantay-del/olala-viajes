@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Generar recibo{% endblock %}
+{% block topbar_title %}Generar recibo{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card mb-3" style="border-left:4px solid var(--teal)">
+      <div class="card-body py-2">
+        <strong>{{ reserva.numero }}</strong> — {{ reserva.cliente }} — {{ reserva.destino }}
+      </div>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-section">
+        <div class="form-section-title"><i class="fas fa-receipt me-2"></i>Seleccionar cobros a incluir</div>
+        <div class="table-responsive mb-3">
+          <table class="table table-sm">
+            <thead><tr><th></th><th>Fecha</th><th>Forma de pago</th><th>Moneda</th><th class="text-end">Monto</th><th>Referencia</th></tr></thead>
+            <tbody>
+              {% for c in cobros_disponibles %}
+              <tr>
+                <td><input type="checkbox" name="cobros" value="{{ c.pk }}" class="form-check-input" checked></td>
+                <td>{{ c.fecha|date:"d/m/Y" }}</td>
+                <td class="small">{{ c.get_forma_pago_display }}</td>
+                <td>{{ c.moneda }}</td>
+                <td class="text-end fw-bold moneda-{{ c.moneda }}">{{ c.monto|floatformat:2 }}</td>
+                <td class="small text-muted">{{ c.referencia|default:"—" }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="text-center text-muted py-2">No hay cobros para incluir en el recibo.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="row g-3">
+          <div class="col-md-4"><label class="form-label">Fecha del recibo</label>{{ form.fecha }}</div>
+          <div class="col-md-8"><label class="form-label">Notas</label>{{ form.notas }}</div>
+        </div>
+      </div>
+      <div class="d-flex gap-2 justify-content-end">
+        <a href="{% url 'reserva_detalle' reserva.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-teal"><i class="fas fa-receipt me-1"></i>Generar recibo</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

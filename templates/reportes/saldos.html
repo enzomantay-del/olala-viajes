@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Saldos Pendientes{% endblock %}
+{% block topbar_title %}Saldos Pendientes{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2><i class="fas fa-balance-scale me-2 text-teal"></i>Saldos pendientes</h2>
+  <a href="{% url 'reportes' %}" class="btn btn-outline-secondary btn-sm">← Volver</a>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header bg-teal text-white"><i class="fas fa-hand-holding-dollar me-2"></i>Cobros pendientes de clientes</div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Reserva</th><th>Cliente</th><th>Destino</th><th>Salida</th><th>Estado</th><th class="text-end">Precio venta</th><th class="text-end">Cobrado</th><th class="text-end">Saldo</th></tr></thead>
+      <tbody>
+        {% for r in con_saldo_cliente %}
+        <tr>
+          <td><a href="{% url 'reserva_detalle' r.pk %}">{{ r.numero }}</a></td>
+          <td>{{ r.cliente }}</td>
+          <td>{{ r.destino }}</td>
+          <td>{{ r.fecha_salida|date:"d/m/Y" }}</td>
+          <td><span class="badge badge-{{ r.estado }}">{{ r.get_estado_display }}</span></td>
+          <td class="text-end">{{ r.moneda_venta }} {{ r.precio_venta|floatformat:2 }}</td>
+          <td class="text-end text-success">{{ r.moneda_venta }} {{ r.total_cobrado|floatformat:2 }}</td>
+          <td class="text-end saldo-pendiente">{{ r.moneda_venta }} {{ r.saldo_pendiente_cliente|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-3">Sin saldos pendientes de clientes.</td></tr>
+        {% endfor %}
+      </tbody>
+      {% if totales_cliente %}
+      <tfoot class="table-light fw-bold">
+        <tr>
+          <td colspan="7" class="text-end">Total pendiente:</td>
+          <td class="text-end saldo-pendiente">
+            {% for moneda, total in totales_cliente.items %}
+              {{ moneda }} {{ total|floatformat:2 }}{% if not forloop.last %} &nbsp;|&nbsp; {% endif %}
+            {% endfor %}
+          </td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header text-white" style="background:#0f766e"><i class="fas fa-credit-card me-2"></i>Pagos pendientes a proveedores</div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Reserva</th><th>Proveedor</th><th>Destino</th><th>Salida</th><th>Estado</th><th class="text-end">Precio costo</th><th class="text-end">Pagado</th><th class="text-end">Saldo</th></tr></thead>
+      <tbody>
+        {% for r in con_saldo_proveedor %}
+        <tr>
+          <td><a href="{% url 'reserva_detalle' r.pk %}">{{ r.numero }}</a></td>
+          <td>{{ r.proveedor }}</td>
+          <td>{{ r.destino }}</td>
+          <td>{{ r.fecha_salida|date:"d/m/Y" }}</td>
+          <td><span class="badge badge-{{ r.estado }}">{{ r.get_estado_display }}</span></td>
+          <td class="text-end">{{ r.moneda_costo }} {{ r.precio_costo|floatformat:2 }}</td>
+          <td class="text-end text-success">{{ r.moneda_costo }} {{ r.total_pagado_proveedor|floatformat:2 }}</td>
+          <td class="text-end saldo-pendiente">{{ r.moneda_costo }} {{ r.saldo_pendiente_proveedor|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-3">Sin pagos pendientes a proveedores.</td></tr>
+        {% endfor %}
+      </tbody>
+      {% if totales_proveedor %}
+      <tfoot class="table-light fw-bold">
+        <tr>
+          <td colspan="7" class="text-end">Total pendiente:</td>
+          <td class="text-end saldo-pendiente">
+            {% for moneda, total in totales_proveedor.items %}
+              {{ moneda }} {{ total|floatformat:2 }}{% if not forloop.last %} &nbsp;|&nbsp; {% endif %}
+            {% endfor %}
+          </td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</div>
+{% endblock %}

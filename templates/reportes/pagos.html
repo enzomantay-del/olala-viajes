@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Reporte de Pagos a Proveedores{% endblock %}
+{% block topbar_title %}Reporte de Pagos a Proveedores{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2><i class="fas fa-credit-card me-2 text-teal"></i>Pagos a proveedores por período</h2>
+  <a href="{% url 'reportes' %}" class="btn btn-outline-secondary btn-sm">← Volver</a>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Desde</label>
+        <input type="date" name="desde" value="{{ desde }}" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Hasta</label>
+        <input type="date" name="hasta" value="{{ hasta }}" class="form-control">
+      </div>
+      <div class="col-md-4 d-flex gap-2">
+        <button class="btn btn-teal" type="submit"><i class="fas fa-search me-1"></i>Filtrar</button>
+        <a href="{% url 'reporte_pagos' %}" class="btn btn-outline-secondary">Limpiar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if totales %}
+<div class="row g-2 mb-3">
+  {% for moneda, total in totales.items %}
+  <div class="col-auto">
+    <div class="stat-card" style="background:#0f766e;padding:12px 20px">
+      <div class="stat-label">Total {{ moneda }}</div>
+      <div class="stat-number" style="font-size:1.5rem">{{ moneda }} {{ total|floatformat:2 }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Fecha</th><th>Proveedor</th><th>Reserva</th><th>Destino</th><th>Forma de pago</th><th>Referencia</th><th class="text-end">Monto</th></tr></thead>
+      <tbody>
+        {% for p in pagos %}
+        <tr>
+          <td>{{ p.fecha|date:"d/m/Y" }}</td>
+          <td>{{ p.reserva.proveedor }}</td>
+          <td><a href="{% url 'reserva_detalle' p.reserva.pk %}">{{ p.reserva.numero }}</a></td>
+          <td class="small">{{ p.reserva.destino }}</td>
+          <td>{{ p.get_forma_pago_display }}</td>
+          <td class="small text-muted">{{ p.referencia|default:"—" }}</td>
+          <td class="text-end fw-bold moneda-{{ p.moneda }}">{{ p.moneda }} {{ p.monto|floatformat:2 }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No hay pagos en el período seleccionado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

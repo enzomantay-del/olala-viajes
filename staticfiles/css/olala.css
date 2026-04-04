@@ -1,0 +1,184 @@
+:root {
+  --teal: #0a6e7c;
+  --teal-dark: #074f59;
+  --teal-light: #e0f2f5;
+  --orange: #f08030;
+  --orange-light: #fff3e8;
+  --sidebar-width: 240px;
+  --topbar-height: 56px;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f0f4f6; }
+
+/* ── Sidebar ─────────────────────────────────────── */
+.sidebar {
+  position: fixed; top: 0; left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: var(--teal-dark);
+  display: flex; flex-direction: column;
+  z-index: 1000;
+  transition: width 0.25s;
+  overflow-x: hidden;
+}
+.sidebar.collapsed { width: 60px; }
+.sidebar.collapsed .nav-item span,
+.sidebar.collapsed .nav-section,
+.sidebar.collapsed .sidebar-alerts,
+.sidebar.collapsed .logo-img { display: none; }
+
+.sidebar-logo {
+  padding: 16px 12px;
+  background: white;
+  text-align: center;
+  min-height: 80px;
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-img { max-width: 160px; max-height: 55px; object-fit: contain; }
+
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 8px 0; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 18px;
+  color: rgba(255,255,255,0.82);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.nav-item:hover { background: rgba(255,255,255,0.12); color: white; }
+.nav-item.active { background: var(--orange); color: white; font-weight: 600; }
+.nav-item i { width: 20px; text-align: center; font-size: 1rem; flex-shrink: 0; }
+
+.nav-section {
+  padding: 14px 18px 4px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.45);
+  font-weight: 600;
+}
+
+.sidebar-alerts { padding: 10px 12px; }
+.alert-badge {
+  display: block;
+  background: var(--orange);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  text-decoration: none;
+  text-align: center;
+}
+
+/* ── Main Content ────────────────────────────────── */
+.main-content {
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+  transition: margin-left 0.25s;
+  display: flex; flex-direction: column;
+}
+.main-content.expanded { margin-left: 60px; }
+
+/* ── Topbar ──────────────────────────────────────── */
+.topbar {
+  height: var(--topbar-height);
+  background: white;
+  border-bottom: 1px solid #dde3e7;
+  display: flex; align-items: center;
+  padding: 0 20px; gap: 16px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+.btn-menu {
+  background: none; border: none; font-size: 1.1rem;
+  color: var(--teal); cursor: pointer; padding: 4px 8px;
+}
+.topbar-title { font-size: 1rem; font-weight: 600; color: var(--teal-dark); flex: 1; }
+.topbar-right { font-size: 0.82rem; color: #999; }
+
+/* ── Content Area ────────────────────────────────── */
+.content-area { padding: 24px; flex: 1; }
+
+/* ── Cards ───────────────────────────────────────── */
+.card { border: none; border-radius: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.09); }
+.card-header { border-radius: 10px 10px 0 0 !important; }
+
+.stat-card {
+  border-radius: 10px;
+  padding: 20px 24px;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+.stat-card .stat-number { font-size: 2.2rem; font-weight: 700; line-height: 1; }
+.stat-card .stat-label { font-size: 0.82rem; opacity: 0.85; margin-top: 4px; }
+.stat-card i { font-size: 2rem; opacity: 0.35; }
+
+.bg-teal { background: var(--teal) !important; }
+.bg-teal-dark { background: var(--teal-dark) !important; }
+.text-teal { color: var(--teal) !important; }
+.text-orange { color: var(--orange) !important; }
+.bg-orange { background: var(--orange) !important; }
+.border-teal { border-color: var(--teal) !important; }
+
+/* ── Tables ──────────────────────────────────────── */
+.table th { background: var(--teal); color: white; font-weight: 600; font-size: 0.82rem; border: none; }
+.table td { font-size: 0.87rem; vertical-align: middle; }
+.table-hover tbody tr:hover { background: var(--teal-light); }
+
+/* ── Buttons ─────────────────────────────────────── */
+.btn-teal { background: var(--teal); color: white; border: none; }
+.btn-teal:hover { background: var(--teal-dark); color: white; }
+.btn-orange { background: var(--orange); color: white; border: none; }
+.btn-orange:hover { background: #d06820; color: white; }
+
+/* ── Badges estado reserva ───────────────────────── */
+.badge-PENDIENTE { background: #ffc107; color: #333; }
+.badge-CONFIRMADA { background: #0dcaf0; color: #fff; }
+.badge-EN_CURSO { background: #0d6efd; color: #fff; }
+.badge-COMPLETADA { background: #198754; color: #fff; }
+.badge-CANCELADA { background: #dc3545; color: #fff; }
+
+/* ── Monedas ─────────────────────────────────────── */
+.moneda-ARS { color: #1a7a3a; font-weight: 600; }
+.moneda-USD { color: #1a4a7a; font-weight: 600; }
+.moneda-BRL { color: #7a5a1a; font-weight: 600; }
+
+/* ── Saldo indicators ────────────────────────────── */
+.saldo-ok { color: #198754; font-weight: 600; }
+.saldo-pendiente { color: #dc3545; font-weight: 600; }
+.saldo-parcial { color: #f08030; font-weight: 600; }
+
+/* ── Page header ─────────────────────────────────── */
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.page-header h2 { margin: 0; color: var(--teal-dark); font-size: 1.35rem; font-weight: 700; }
+
+/* ── Alerts dashboard ────────────────────────────── */
+.alerta-salida {
+  border-left: 4px solid var(--orange);
+  background: var(--orange-light);
+  border-radius: 0 8px 8px 0;
+}
+.alerta-saldo {
+  border-left: 4px solid #dc3545;
+  background: #fff5f5;
+  border-radius: 0 8px 8px 0;
+}
+
+/* ── Forms ───────────────────────────────────────── */
+.form-label { font-weight: 600; font-size: 0.85rem; color: #444; }
+.form-section { background: white; border-radius: 10px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+.form-section-title { font-size: 0.9rem; font-weight: 700; color: var(--teal); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid var(--teal-light); }
+
+/* ── Responsive ──────────────────────────────────── */
+@media (max-width: 768px) {
+  .sidebar { width: 60px; }
+  .sidebar .nav-item span, .sidebar .nav-section, .sidebar .sidebar-alerts, .sidebar .logo-img { display: none; }
+  .main-content { margin-left: 60px; }
+  .content-area { padding: 14px; }
+}

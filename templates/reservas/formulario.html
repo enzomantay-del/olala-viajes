@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block topbar_title %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-11">
+    <form method="post" id="reserva-form">
+      {% csrf_token %}
+
+      <div class="form-section">
+        <div class="form-section-title"><i class="fas fa-info-circle me-2"></i>Datos principales</div>
+        <div class="row g-3">
+          <div class="col-md-5">
+            <label class="form-label">Cliente titular *</label>
+            {{ form.cliente }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Destino *</label>
+            {{ form.destino }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Estado</label>
+            {{ form.estado }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Fecha de salida *</label>
+            {{ form.fecha_salida }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Fecha de regreso</label>
+            {{ form.fecha_regreso }}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Pasajeros adicionales</label>
+            {{ form.pasajeros_adicionales }}
+            <small class="text-muted">Ctrl+clic para seleccionar múltiples</small>
+          </div>
+          <div class="col-12">
+            <label class="form-label">Descripción / Observaciones generales</label>
+            {{ form.descripcion }}
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SERVICIOS (formset) ───────────────────────── -->
+      <div class="form-section">
+        <div class="form-section-title"><i class="fas fa-layer-group me-2"></i>Servicios y proveedores</div>
+        <p class="text-muted small mb-3">Agregá un ítem por cada servicio contratado (vuelo, hotel, traslado, seguro, etc.). Podés combinar distintos proveedores y monedas.</p>
+
+        {{ formset.management_form }}
+
+        <div id="servicios-container">
+          {% for sform in formset %}
+          <div class="servicio-row card mb-2 {% if sform.instance.pk %}border-teal{% endif %}">
+            <div class="card-body py-2 px-3">
+              {% if sform.non_field_errors %}
+                <div class="alert alert-danger py-1 small">{{ sform.non_field_errors }}</div>
+              {% endif %}
+              <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                  <label class="form-label form-label-sm mb-1">Proveedor *</label>
+                  {{ sform.proveedor }}
+                  {% if sform.proveedor.errors %}<div class="text-danger small">{{ sform.proveedor.errors }}</div>{% endif %}
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label form-label-sm mb-1">Tipo</label>
+                  {{ sform.tipo_servicio }}
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label form-label-sm mb-1">Descripción del servicio</label>
+                  {{ sform.descripcion }}
+                </div>
+                <div class="col-md-1">
+                  <label class="form-label form-label-sm mb-1">Moneda</label>
+                  {{ sform.moneda_costo }}
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label form-label-sm mb-1">Costo</label>
+                  {{ sform.precio_costo }}
+                </div>
+                <div class="col-md-1 d-flex align-items-end gap-1">
+                  {% if sform.instance.pk %}
+                    <div class="form-check mt-1" title="Eliminar este servicio">
+                      {{ sform.DELETE }}
+                      <label class="form-check-label text-danger small" for="{{ sform.DELETE.id_for_label }}"><i class="fas fa-trash"></i></label>
+                    </div>
+                  {% else %}
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-servicio" title="Quitar fila"><i class="fas fa-times"></i></button>
+                  {% endif %}
+                  {{ sform.id }}
+                </div>
+              </div>
+              <div class="row g-2 mt-1">
+                <div class="col-md-3 offset-md-9">
+                  <label class="form-label form-label-sm mb-1">Nro. reserva proveedor</label>
+                  {{ sform.nro_reserva_proveedor }}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="d-flex align-items-center gap-3 mt-2">
+          <button type="button" id="btn-add-servicio" class="btn btn-sm btn-outline-teal">
+            <i class="fas fa-plus me-1"></i>Agregar servicio
+          </button>
+          <div id="resumen-costos" class="small text-muted"></div>
+        </div>
+      </div>
+
+      <!-- ── VENTA Y COMISIÓN ───────────────────────────── -->
+      <div class="form-section">
+        <div class="form-section-title"><i class="fas fa-dollar-sign me-2"></i>Precio de venta</div>
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="form-label">Precio de venta al cliente</label>
+            {{ form.precio_venta }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Moneda venta</label>
+            {{ form.moneda_venta }}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Comisión (%)</label>
+            {{ form.comision_porcentaje }}
+            <small class="text-muted">Se pre-carga del primer proveedor</small>
+          </div>
+          <div class="col-md-3 d-flex align-items-end">
+            <div class="p-2 rounded w-100" style="background:var(--teal-light)">
+              <div class="small text-muted">Comisión estimada</div>
+              <div id="comision-monto" class="fw-bold text-teal">—</div>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Notas internas</label>
+            {{ form.notas }}
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 justify-content-end">
+        <a href="{% url 'reservas_lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-teal"><i class="fas fa-save me-1"></i>Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Template vacío para nuevas filas -->
+<template id="servicio-template">
+  <div class="servicio-row card mb-2">
+    <div class="card-body py-2 px-3">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label form-label-sm mb-1">Proveedor *</label>
+          <select name="servicios-__prefix__-proveedor" class="form-select form-select-sm">
+            <option value="">---------</option>
+            {% for p in proveedores_comisiones %}
+            <option value="{{ p.pk }}" data-comision="{{ p.comision_porcentaje }}">{{ p.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label form-label-sm mb-1">Tipo</label>
+          <select name="servicios-__prefix__-tipo_servicio" class="form-select form-select-sm">
+            <option value="VUELO">Vuelo</option>
+            <option value="HOTEL">Hotel</option>
+            <option value="PAQUETE" selected>Paquete Turístico</option>
+            <option value="CRUCERO">Crucero</option>
+            <option value="TRASLADO">Traslado</option>
+            <option value="SEGURO">Seguro de Viaje</option>
+            <option value="EXCURSION">Excursión</option>
+            <option value="OTRO">Otro</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label form-label-sm mb-1">Descripción del servicio</label>
+          <input type="text" name="servicios-__prefix__-descripcion" class="form-control form-control-sm" placeholder="Ej: vuelo GRU-EZE, hotel 3 noches...">
+        </div>
+        <div class="col-md-1">
+          <label class="form-label form-label-sm mb-1">Moneda</label>
+          <select name="servicios-__prefix__-moneda_costo" class="form-select form-select-sm moneda-select">
+            <option value="ARS">ARS</option>
+            <option value="USD">USD</option>
+            <option value="BRL">BRL</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label form-label-sm mb-1">Costo</label>
+          <input type="number" name="servicios-__prefix__-precio_costo" class="form-control form-control-sm costo-input" step="0.01" min="0" placeholder="0.00" value="0">
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+          <button type="button" class="btn btn-sm btn-outline-danger btn-remove-servicio" title="Quitar fila"><i class="fas fa-times"></i></button>
+          <input type="hidden" name="servicios-__prefix__-id" value="">
+        </div>
+      </div>
+      <div class="row g-2 mt-1">
+        <div class="col-md-3 offset-md-9">
+          <label class="form-label form-label-sm mb-1">Nro. reserva proveedor</label>
+          <input type="text" name="servicios-__prefix__-nro_reserva_proveedor" class="form-control form-control-sm" placeholder="Nro. reserva (opcional)">
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+// ── Comisiones por proveedor ──────────────────────────────────────────
+var comisiones = {
+  {% for p in proveedores_comisiones %}
+  "{{ p.pk }}": "{{ p.comision_porcentaje }}",
+  {% endfor %}
+};
+
+function calcularComision() {
+  var venta = parseFloat(document.getElementById('id_precio_venta').value) || 0;
+  var comPct = parseFloat(document.getElementById('id_comision_porcentaje').value) || 0;
+  var moneda = document.getElementById('id_moneda_venta').value || '';
+  var monto = (venta * comPct / 100).toFixed(2);
+  document.getElementById('comision-monto').textContent = comPct > 0 ? moneda + ' ' + monto : '—';
+}
+
+document.getElementById('id_comision_porcentaje').addEventListener('input', calcularComision);
+document.getElementById('id_precio_venta').addEventListener('input', calcularComision);
+document.getElementById('id_moneda_venta').addEventListener('change', calcularComision);
+calcularComision();
+
+// ── Sumatoria de costos por moneda ────────────────────────────────────
+function actualizarResumenCostos() {
+  var totales = {};
+  document.querySelectorAll('.servicio-row').forEach(function(row) {
+    // Saltear filas marcadas para eliminar
+    var delCheck = row.querySelector('input[type=checkbox][name$="-DELETE"]');
+    if (delCheck && delCheck.checked) return;
+    var costoInput = row.querySelector('.costo-input, input[name$="-precio_costo"]');
+    var monedaSelect = row.querySelector('.moneda-select, select[name$="-moneda_costo"]');
+    if (!costoInput || !monedaSelect) return;
+    var costo = parseFloat(costoInput.value) || 0;
+    var moneda = monedaSelect.value;
+    if (costo > 0) {
+      totales[moneda] = (totales[moneda] || 0) + costo;
+    }
+  });
+  var partes = Object.entries(totales).map(function(e) {
+    var sym = {'ARS': '$', 'USD': 'U$S', 'BRL': 'R$'}[e[0]] || e[0];
+    return '<strong>' + sym + ' ' + e[1].toLocaleString('es-AR', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</strong>';
+  });
+  var resumen = document.getElementById('resumen-costos');
+  resumen.innerHTML = partes.length ? 'Costo total: ' + partes.join(' + ') : '';
+}
+
+document.getElementById('servicios-container').addEventListener('input', actualizarResumenCostos);
+document.getElementById('servicios-container').addEventListener('change', actualizarResumenCostos);
+actualizarResumenCostos();
+
+// ── Pre-cargar comisión del primer proveedor seleccionado ─────────────
+document.getElementById('servicios-container').addEventListener('change', function(e) {
+  if (e.target.tagName === 'SELECT' && e.target.name && e.target.name.endsWith('-proveedor')) {
+    var allProveedorSelects = document.querySelectorAll('select[name$="-proveedor"]');
+    var firstSelect = allProveedorSelects[0];
+    if (e.target === firstSelect || document.getElementById('id_comision_porcentaje').value === '0' || document.getElementById('id_comision_porcentaje').value === '') {
+      var pct = comisiones[e.target.value] || '';
+      if (pct) {
+        document.getElementById('id_comision_porcentaje').value = pct;
+        calcularComision();
+      }
+    }
+  }
+});
+
+// ── Agregar / quitar filas de servicios ───────────────────────────────
+var totalForms = document.getElementById('id_servicios-TOTAL_FORMS');
+
+function actualizarIndices() {
+  var filas = document.querySelectorAll('#servicios-container .servicio-row');
+  totalForms.value = filas.length;
+}
+
+document.getElementById('btn-add-servicio').addEventListener('click', function() {
+  var template = document.getElementById('servicio-template');
+  var idx = document.querySelectorAll('#servicios-container .servicio-row').length;
+  var html = template.innerHTML.replace(/__prefix__/g, idx);
+  var tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  var newRow = tmp.firstElementChild;
+  document.getElementById('servicios-container').appendChild(newRow);
+  totalForms.value = idx + 1;
+  actualizarResumenCostos();
+});
+
+document.getElementById('servicios-container').addEventListener('click', function(e) {
+  var btn = e.target.closest('.btn-remove-servicio');
+  if (btn) {
+    btn.closest('.servicio-row').remove();
+    actualizarIndices();
+    actualizarResumenCostos();
+  }
+});
+</script>
+{% endblock %}

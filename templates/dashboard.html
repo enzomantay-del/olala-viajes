@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard — Olalá Viajes{% endblock %}
+{% block topbar_title %}Panel de Control{% endblock %}
+
+{% block content %}
+{% load static %}
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card bg-teal">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-number">{{ total_clientes }}</div>
+          <div class="stat-label">Clientes activos</div>
+        </div>
+        <i class="fas fa-users"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card" style="background:#0891b2">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-number">{{ total_reservas }}</div>
+          <div class="stat-label">Reservas totales</div>
+        </div>
+        <i class="fas fa-plane-departure"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card" style="background:#f08030">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-number">{{ salidas_proximas|length }}</div>
+          <div class="stat-label">Salidas próximas (7 días)</div>
+        </div>
+        <i class="fas fa-bell"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="stat-card" style="background:#0f766e">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <div class="stat-number">{{ total_proveedores }}</div>
+          <div class="stat-label">Proveedores activos</div>
+        </div>
+        <i class="fas fa-building"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ganancias -->
+<div class="card mb-4">
+  <div class="card-header bg-teal text-white d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <span><i class="fas fa-chart-line me-2"></i><strong>Ganancias estimadas</strong>
+      <span class="ms-2 small opacity-75">
+        {% if periodo == 'hoy' %}Hoy
+        {% elif periodo == 'semana' %}Esta semana
+        {% elif periodo == 'mes' %}Este mes
+        {% elif periodo == 'anio' %}Este año
+        {% else %}{{ desde_g|date:"d/m/Y" }} — {{ hasta_g|date:"d/m/Y" }}
+        {% endif %}
+      </span>
+    </span>
+    <form method="get" class="d-flex gap-2 align-items-center flex-wrap">
+      <div class="btn-group btn-group-sm">
+        <a href="?periodo=hoy" class="btn {% if periodo == 'hoy' %}btn-orange{% else %}btn-outline-light{% endif %}">Hoy</a>
+        <a href="?periodo=semana" class="btn {% if periodo == 'semana' %}btn-orange{% else %}btn-outline-light{% endif %}">Semana</a>
+        <a href="?periodo=mes" class="btn {% if periodo == 'mes' %}btn-orange{% else %}btn-outline-light{% endif %}">Mes</a>
+        <a href="?periodo=anio" class="btn {% if periodo == 'anio' %}btn-orange{% else %}btn-outline-light{% endif %}">Año</a>
+      </div>
+      <input type="hidden" name="periodo" value="custom">
+      <input type="date" name="desde" value="{{ desde_custom }}" class="form-control form-control-sm" style="width:140px">
+      <input type="date" name="hasta" value="{{ hasta_custom }}" class="form-control form-control-sm" style="width:140px">
+      <button type="submit" class="btn btn-sm btn-orange">Filtrar</button>
+    </form>
+  </div>
+  <div class="card-body">
+    {% if ganancias_periodo %}
+    <div class="row g-3">
+      {% for moneda, ganancia in ganancias_periodo.items %}
+      <div class="col-auto">
+        <div class="p-3 rounded-3 text-center" style="background:{% if ganancia >= 0 %}#f0fff4{% else %}#fff5f5{% endif %};min-width:160px">
+          <div class="small text-muted mb-1">{{ moneda }}</div>
+          <div class="fs-4 fw-bold {% if ganancia >= 0 %}text-success{% else %}text-danger{% endif %}">
+            {% if ganancia >= 0 %}+{% endif %}{{ moneda }} {{ ganancia|floatformat:2 }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="small text-muted mt-2 mb-0">
+      <i class="fas fa-info-circle me-1"></i>
+      Calculado sobre reservas cargadas en el período. Solo incluye reservas donde costo y venta están en la misma moneda.
+    </p>
+    {% else %}
+    <p class="text-muted mb-0">No hay reservas con datos suficientes en el período seleccionado.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+
+  <!-- Salidas próximas -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header bg-orange text-white d-flex align-items-center gap-2">
+        <i class="fas fa-bell"></i>
+        <strong>Salidas próximas (7 días)</strong>
+      </div>
+      <div class="card-body p-0">
+        {% if salidas_proximas %}
+        <div class="list-group list-group-flush">
+          {% for r in salidas_proximas %}
+          <a href="{% url 'reserva_detalle' r.pk %}" class="list-group-item list-group-item-action alerta-salida mb-1 mx-2 mt-2">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <strong>{{ r.cliente }}</strong>
+                <div class="small text-muted">{{ r.destino }} — {{ r.get_tipo_servicio_display }}</div>
+                <div class="small">Reserva: <b>{{ r.numero }}</b></div>
+              </div>
+              <div class="text-end">
+                <span class="badge bg-orange">{{ r.fecha_salida|date:"d/m/Y" }}</span>
+                <div class="small text-muted mt-1">{{ r.proveedor }}</div>
+              </div>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">
+          <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+          <p class="mb-0">No hay salidas en los próximos 7 días</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Saldos pendientes clientes -->
+  <div class="col-lg-6">
+    <div class="card h-100">
+      <div class="card-header bg-teal text-white d-flex align-items-center gap-2">
+        <i class="fas fa-hand-holding-dollar"></i>
+        <strong>Saldos pendientes de clientes</strong>
+      </div>
+      <div class="card-body p-0">
+        {% if con_saldo_cliente %}
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Reserva</th>
+                <th>Cliente</th>
+                <th>Destino</th>
+                <th class="text-end">Saldo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in con_saldo_cliente %}
+              <tr>
+                <td><a href="{% url 'reserva_detalle' r.pk %}">{{ r.numero }}</a></td>
+                <td>{{ r.cliente }}</td>
+                <td class="small">{{ r.destino }}</td>
+                <td class="text-end saldo-pendiente">
+                  {{ r.moneda_venta }} {{ r.saldo_pendiente_cliente|floatformat:2 }}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">
+          <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+          <p class="mb-0">Sin saldos pendientes</p>
+        </div>
+        {% endif %}
+      </div>
+      {% if con_saldo_cliente %}
+      <div class="card-footer text-end">
+        <a href="{% url 'reporte_saldos' %}" class="btn btn-sm btn-teal">Ver reporte completo</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Pagos pendientes proveedores -->
+  <div class="col-lg-12">
+    <div class="card">
+      <div class="card-header" style="background:#0f766e" >
+        <span class="text-white"><i class="fas fa-credit-card me-2"></i><strong>Pagos pendientes a proveedores</strong></span>
+      </div>
+      <div class="card-body p-0">
+        {% if con_saldo_proveedor %}
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Reserva</th>
+                <th>Cliente</th>
+                <th>Proveedor</th>
+                <th>Destino</th>
+                <th>Salida</th>
+                <th class="text-end">Saldo pendiente</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in con_saldo_proveedor %}
+              <tr>
+                <td><a href="{% url 'reserva_detalle' r.pk %}">{{ r.numero }}</a></td>
+                <td>{{ r.cliente }}</td>
+                <td>{{ r.proveedor }}</td>
+                <td class="small">{{ r.destino }}</td>
+                <td class="small">{{ r.fecha_salida|date:"d/m/Y" }}</td>
+                <td class="text-end saldo-pendiente">
+                  {{ r.moneda_costo }} {{ r.saldo_pendiente_proveedor|floatformat:2 }}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">
+          <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+          <p class="mb-0">Sin pagos pendientes a proveedores</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Recibo {{ recibo.numero }}{% endblock %}
+{% block topbar_title %}Recibo {% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2><i class="fas fa-receipt me-2 text-teal"></i>Recibo Nro. {{ recibo.numero }}</h2>
+  <div class="d-flex gap-2">
+    <a href="{% url 'recibo_pdf' recibo.pk %}" class="btn btn-teal"><i class="fas fa-file-pdf me-1"></i>Descargar PDF</a>
+    <a href="{% url 'recibo_eliminar' recibo.pk %}" class="btn btn-outline-danger"><i class="fas fa-trash"></i></a>
+  </div>
+</div>
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header bg-teal text-white">Detalle del recibo</div>
+      <div class="card-body">
+        <table class="table table-sm mb-3">
+          <tr><th class="text-muted">Cliente</th><td>{{ recibo.cliente }}</td></tr>
+          <tr><th class="text-muted">Fecha</th><td>{{ recibo.fecha|date:"d/m/Y" }}</td></tr>
+          {% if recibo.notas %}<tr><th class="text-muted">Notas</th><td>{{ recibo.notas }}</td></tr>{% endif %}
+        </table>
+
+        <h6 class="text-teal mb-2">Cobros incluidos</h6>
+        <table class="table table-sm">
+          <thead><tr><th>Fecha</th><th>Reserva</th><th>Forma de pago</th><th class="text-end">Monto</th></tr></thead>
+          <tbody>
+            {% for c in recibo.cobros.all %}
+            <tr>
+              <td>{{ c.fecha|date:"d/m/Y" }}</td>
+              <td>{{ c.reserva.numero }} — {{ c.reserva.destino }}</td>
+              <td>{{ c.get_forma_pago_display }}</td>
+              <td class="text-end fw-bold moneda-{{ c.moneda }}">{{ c.moneda }} {{ c.monto|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <div class="text-end mt-2">
+          {% for moneda, total in recibo.total_por_moneda.items %}
+          <div class="fs-5 fw-bold moneda-{{ moneda }}">TOTAL {{ moneda }}: {{ simbolos|default_if_none:'' }}{{ total|floatformat:2 }}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

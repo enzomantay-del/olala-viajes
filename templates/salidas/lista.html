@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% block title %}Salidas de Operadoras{% endblock %}
+{% block topbar_title %}Salidas de Operadoras{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <h2><i class="fas fa-bus me-2 text-teal"></i>Salidas de Operadoras</h2>
+  <div class="d-flex gap-2">
+    <a href="{% url 'salidas_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-outline-secondary" target="_blank">
+      <i class="fas fa-file-pdf me-1"></i>PDF
+    </a>
+    <a href="{% url 'salida_nueva' %}" class="btn btn-teal"><i class="fas fa-plus me-1"></i>Nueva salida</a>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-5">
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Buscar por paquete, lugar u operadora...">
+      </div>
+      <div class="col-md-3">
+        <select name="orden" class="form-select">
+          <option value="fecha_salida" {% if orden == 'fecha_salida' %}selected{% endif %}>Fecha ↑</option>
+          <option value="-fecha_salida" {% if orden == '-fecha_salida' %}selected{% endif %}>Fecha ↓</option>
+          <option value="operadora__nombre" {% if orden == 'operadora__nombre' %}selected{% endif %}>Operadora A-Z</option>
+          <option value="-operadora__nombre" {% if orden == '-operadora__nombre' %}selected{% endif %}>Operadora Z-A</option>
+          <option value="lugar_salida" {% if orden == 'lugar_salida' %}selected{% endif %}>Lugar A-Z</option>
+          <option value="nombre_paquete" {% if orden == 'nombre_paquete' %}selected{% endif %}>Paquete A-Z</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <div class="form-check mt-1">
+          <input class="form-check-input" type="checkbox" name="jardin" value="1" id="chkJardin" {% if solo_jardin == '1' %}checked{% endif %}>
+          <label class="form-check-label" for="chkJardin">Solo Jardín América</label>
+        </div>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
+        <button class="btn btn-teal w-100" type="submit"><i class="fas fa-search"></i> Filtrar</button>
+        {% if q or solo_jardin %}
+        <a href="{% url 'salidas_lista' %}" class="btn btn-outline-secondary" title="Limpiar filtros"><i class="fas fa-times"></i></a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width:40px">
+              <input class="form-check-input" type="checkbox" id="chkTodos" title="Seleccionar todo">
+            </th>
+            <th>Paquete</th>
+            <th>Operadora</th>
+            <th>Fecha de salida</th>
+            <th>Días</th>
+            <th>Lugar de salida</th>
+            <th class="text-center">Jardín Amér.</th>
+            <th>Precio</th>
+            <th>Cupos</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in salidas %}
+          {% with dias=s.dias_restantes %}
+          <tr class="fila-salida">
+            <td><input class="form-check-input chk-salida" type="checkbox" value="{{ s.pk }}"></td>
+            <td>
+              <span class="fw-semibold">{{ s.nombre_paquete }}</span>
+              {% if s.descripcion %}<br><small class="text-muted">{{ s.descripcion|truncatechars:60 }}</small>{% endif %}
+            </td>
+            <td>{{ s.operadora|default:"—" }}</td>
+            <td>{{ s.fecha_salida|date:"d/m/Y" }}</td>
+            <td>
+              {% if dias == 0 %}<span class="badge bg-danger">Hoy</span>
+              {% elif dias == 1 %}<span class="badge bg-warning text-dark">Mañana</span>
+              {% elif dias <= 7 %}<span class="badge bg-warning text-dark">{{ dias }} días</span>
+              {% else %}<span class="badge bg-secondary">{{ dias }} días</span>{% endif %}
+            </td>
+            <td>{{ s.lugar_salida }}</td>
+            <td class="text-center">
+              {% if s.pasa_por_jardin_america %}
+                <span class="badge bg-success"><i class="fas fa-check me-1"></i>Sí</span>
+              {% else %}<span class="text-muted">—</span>{% endif %}
+            </td>
+            <td>
+              {% if s.precio %}
+                {% if s.moneda == 'ARS' %}${% elif s.moneda == 'USD' %}U$S{% else %}R${% endif %}
+                {{ s.precio|floatformat:0 }}
+              {% else %}—{% endif %}
+            </td>
+            <td>{{ s.cupos|default:"—" }}</td>
+            <td class="text-center">
+              <a href="{% url 'salida_editar' s.pk %}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="fas fa-edit"></i></a>
+              <a href="{% url 'salida_eliminar' s.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="fas fa-trash"></i></a>
+            </td>
+          </tr>
+          {% endwith %}
+          {% empty %}
+          <tr>
+            <td colspan="10" class="text-center text-muted py-4">
+              <i class="fas fa-bus fa-2x mb-2 d-block opacity-25"></i>
+              No hay salidas cargadas{% if q or solo_jardin %} con los filtros aplicados{% endif %}.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if salidas %}
+    <div class="px-3 py-2 border-top d-flex align-items-center justify-content-between">
+      <span class="text-muted small">
+        {{ salidas|length }} salida{% if salidas|length != 1 %}s{% endif %} —
+        <span id="txt-seleccionadas">ninguna seleccionada</span>
+      </span>
+      <button type="button" class="btn btn-success btn-sm" id="btn-whatsapp" disabled>
+        <i class="fab fa-whatsapp me-1"></i>Preparar mensaje de WhatsApp
+      </button>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Modal WhatsApp -->
+<div class="modal fade" id="modalWhatsApp" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header" style="background:#25D366; color:white;">
+        <h5 class="modal-title"><i class="fab fa-whatsapp me-2"></i>Mensaje listo para enviar</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-2">
+          <i class="fas fa-info-circle me-1"></i>
+          Hacé clic en <strong>Copiar mensaje</strong> y luego pegalo directamente en WhatsApp.
+        </p>
+        <textarea id="mensajeWA" class="form-control font-monospace" rows="18" readonly style="font-size:0.82rem; resize:none;"></textarea>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-outline-success" id="btn-abrir-wa">
+            <i class="fab fa-whatsapp me-1"></i>Abrir WhatsApp Web
+          </button>
+          <button type="button" class="btn btn-success" id="btn-copiar">
+            <i class="fas fa-copy me-1"></i>Copiar mensaje
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var SALIDAS = {{ salidas_json|safe }};
+
+var E = {
+  saludo: String.fromCodePoint(0x1F44B),
+  avion:  String.fromCodePoint(0x2708, 0xFE0F),
+  mundo:  String.fromCodePoint(0x1F30D),
+  mapa:   String.fromCodePoint(0x1F5FA, 0xFE0F),
+  cal:    String.fromCodePoint(0x1F4C5),
+  pin:    String.fromCodePoint(0x1F4CD),
+  planta: String.fromCodePoint(0x1F33F),
+  dinero: String.fromCodePoint(0x1F4B0),
+  silla:  String.fromCodePoint(0x1FA91),
+  nota:   String.fromCodePoint(0x1F4DD),
+  fuego:  String.fromCodePoint(0x1F525),
+  cel:    String.fromCodePoint(0x1F4F2),
+  smile:  String.fromCodePoint(0x1F60A),
+};
+
+var MESES = ['enero','febrero','marzo','abril','mayo','junio',
+             'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function fechaBonita(iso) {
+  var parts = iso.split('-');
+  return parseInt(parts[2]) + ' de ' + MESES[parseInt(parts[1]) - 1] + ' de ' + parts[0];
+}
+
+function buildMensaje(pks) {
+  var sep = '─────────────────';
+  var bloques = [];
+  SALIDAS.forEach(function(s) {
+    if (pks.indexOf(s.pk) === -1) return;
+    var lineas = [E.mapa + ' *' + s.nombre + '*'];
+    lineas.push(E.cal + ' Salida: ' + fechaBonita(s.fecha));
+    lineas.push(E.pin + ' Desde: ' + s.lugar);
+    if (s.jardin) lineas.push(E.planta + ' Pasa por Jard\xedn Am\xe9rica');
+    if (s.precio) lineas.push(E.dinero + ' Precio por persona: ' + s.simbolo + ' ' + Math.round(s.precio).toLocaleString('es-AR'));
+    if (s.cupos) {
+      if (s.cupos <= 5) {
+        lineas.push(E.silla + ' *\u00daLTIMOS ' + s.cupos + ' LUGARES DISPONIBLES!*');
+      } else {
+        lineas.push(E.silla + ' Lugares disponibles: ' + s.cupos);
+      }
+    }
+    if (s.descripcion) lineas.push(E.nota + ' ' + s.descripcion.substring(0, 150));
+    bloques.push(lineas.join('\n'));
+  });
+  var cuerpo = bloques.length > 0 ? bloques.join('\n' + sep + '\n\n') : '(Sin salidas)';
+  return (
+    E.saludo + ' \xa1Hola! Te escribimos desde *Olal\xe1 Viajes* para contarte sobre nuestras pr\xf3ximas salidas. ' + E.avion + E.mundo + '\n\n' +
+    'Tenemos opciones incre\xedbles esperándote:\n\n' +
+    sep + '\n\n' +
+    cuerpo + '\n\n' +
+    sep + '\n\n' +
+    E.fuego + ' \xa1Los cupos son *limitados*! No dejes pasar esta oportunidad.\n\n' +
+    E.cel + ' Respond\xe9 este mensaje o escrib\xednos para reservar tu lugar. \xa1Con gusto te asesoramos! ' + E.smile
+  );
+}
+
+// ── Checkboxes ──────────────────────────────────────────────────────────────
+var chkTodos = document.getElementById('chkTodos');
+var chks = document.querySelectorAll('.chk-salida');
+var btnWa = document.getElementById('btn-whatsapp');
+var txtSel = document.getElementById('txt-seleccionadas');
+
+function actualizarBoton() {
+  var sel = document.querySelectorAll('.chk-salida:checked').length;
+  btnWa.disabled = sel === 0;
+  txtSel.textContent = sel === 0 ? 'ninguna seleccionada' : sel + ' seleccionada' + (sel !== 1 ? 's' : '');
+  chkTodos.indeterminate = sel > 0 && sel < chks.length;
+  chkTodos.checked = sel === chks.length && chks.length > 0;
+}
+
+chkTodos.addEventListener('change', function() {
+  chks.forEach(function(c) { c.checked = chkTodos.checked; });
+  actualizarBoton();
+});
+chks.forEach(function(c) { c.addEventListener('change', actualizarBoton); });
+document.querySelectorAll('.fila-salida').forEach(function(fila) {
+  fila.style.cursor = 'pointer';
+  fila.addEventListener('click', function(e) {
+    if (e.target.closest('a, button, input')) return;
+    var chk = fila.querySelector('.chk-salida');
+    chk.checked = !chk.checked;
+    actualizarBoton();
+  });
+});
+
+// ── Botón WhatsApp → abre modal con mensaje ─────────────────────────────────
+btnWa.addEventListener('click', function() {
+  var pks = Array.from(document.querySelectorAll('.chk-salida:checked')).map(function(c) { return parseInt(c.value); });
+  if (!pks.length) return;
+  var msg = buildMensaje(pks);
+  document.getElementById('mensajeWA').value = msg;
+  new bootstrap.Modal(document.getElementById('modalWhatsApp')).show();
+});
+
+// ── Copiar al portapapeles ──────────────────────────────────────────────────
+document.getElementById('btn-copiar').addEventListener('click', function() {
+  var ta = document.getElementById('mensajeWA');
+  navigator.clipboard.writeText(ta.value).then(function() {
+    var btn = document.getElementById('btn-copiar');
+    btn.innerHTML = '<i class="fas fa-check me-1"></i>¡Copiado!';
+    btn.classList.replace('btn-success', 'btn-secondary');
+    setTimeout(function() {
+      btn.innerHTML = '<i class="fas fa-copy me-1"></i>Copiar mensaje';
+      btn.classList.replace('btn-secondary', 'btn-success');
+    }, 2500);
+  });
+});
+
+// ── Abrir WhatsApp Web ──────────────────────────────────────────────────────
+document.getElementById('btn-abrir-wa').addEventListener('click', function() {
+  window.open('https://web.whatsapp.com/', '_blank');
+});
+</script>
+{% endblock %}

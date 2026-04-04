@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Eliminar salida{% endblock %}
+{% block topbar_title %}Eliminar salida{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-5">
+    <div class="card border-danger">
+      <div class="card-body text-center py-4">
+        <i class="fas fa-triangle-exclamation fa-3x text-danger mb-3"></i>
+        <h5>¿Eliminar esta salida?</h5>
+        <p class="text-muted mb-1"><strong>{{ salida.nombre_paquete }}</strong></p>
+        <p class="text-muted mb-4">{{ salida.fecha_salida|date:"d/m/Y" }} — {{ salida.lugar_salida }}</p>
+        <form method="post" class="d-flex gap-2 justify-content-center">
+          {% csrf_token %}
+          <a href="{% url 'salidas_lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+          <button type="submit" class="btn btn-danger"><i class="fas fa-trash me-1"></i>Sí, eliminar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

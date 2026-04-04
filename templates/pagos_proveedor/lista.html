@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Pagos a Proveedores{% endblock %}
+{% block topbar_title %}Pagos a Proveedores{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2><i class="fas fa-credit-card me-2 text-teal"></i>Pagos a Proveedores</h2>
+</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead><tr><th>Fecha</th><th>Reserva</th><th>Proveedor</th><th>Destino</th><th>Forma de pago</th><th>Referencia</th><th class="text-end">Monto</th><th class="text-center">Comprobante</th></tr></thead>
+      <tbody>
+        {% for p in pagos %}
+        <tr>
+          <td>{{ p.fecha|date:"d/m/Y" }}</td>
+          <td><a href="{% url 'reserva_detalle' p.reserva.pk %}">{{ p.reserva.numero }}</a></td>
+          <td class="small">{% for s in p.reserva.servicios.all %}{{ s.proveedor }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td>
+          <td class="small">{{ p.reserva.destino }}</td>
+          <td>{{ p.get_forma_pago_display }}</td>
+          <td class="small text-muted">{{ p.referencia|default:"—" }}</td>
+          <td class="text-end fw-bold moneda-{{ p.moneda }}">{{ p.moneda }} {{ p.monto|floatformat:2 }}</td>
+          <td class="text-center">
+            {% if p.comprobante %}
+              <a href="{{ p.comprobante.url }}" target="_blank" title="Ver comprobante"><i class="fas fa-paperclip text-teal"></i></a>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No hay pagos registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Voucher {{ voucher.numero }}{% endblock %}
+{% block topbar_title %}Voucher{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2><i class="fas fa-ticket me-2 text-teal"></i>Voucher Nro. {{ voucher.numero }}</h2>
+  <div class="d-flex gap-2">
+    <a href="{% url 'voucher_pdf' voucher.pk %}" class="btn btn-teal"><i class="fas fa-file-pdf me-1"></i>Descargar PDF</a>
+    <a href="{% url 'voucher_eliminar' voucher.pk %}" class="btn btn-outline-danger"><i class="fas fa-trash"></i></a>
+  </div>
+</div>
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header bg-teal text-white">Detalle del voucher</div>
+      <div class="card-body">
+        {% with r=voucher.reserva %}
+        <table class="table table-sm mb-3">
+          <tr><th class="text-muted" style="width:30%">Fecha emisión</th><td>{{ voucher.fecha|date:"d/m/Y" }}</td></tr>
+          <tr><th class="text-muted">Reserva</th><td><a href="{% url 'reserva_detalle' r.pk %}">{{ r.numero }}</a></td></tr>
+          <tr><th class="text-muted">Pasajero titular</th><td>{{ r.cliente.nombre_completo }} — {{ r.cliente.tipo_doc }}: {{ r.cliente.nro_doc }}</td></tr>
+          {% for p in r.pasajeros_adicionales.all %}
+          <tr><th class="text-muted">Pasajero adicional</th><td>{{ p.nombre_completo }} — {{ p.tipo_doc }}: {{ p.nro_doc }}</td></tr>
+          {% endfor %}
+          <tr><th class="text-muted">Tipo de servicio</th><td>{{ r.get_tipo_servicio_display }}</td></tr>
+          <tr><th class="text-muted">Destino</th><td><strong>{{ r.destino }}</strong></td></tr>
+          <tr><th class="text-muted">Fecha de salida</th><td>{{ r.fecha_salida|date:"d/m/Y" }}</td></tr>
+          <tr><th class="text-muted">Fecha de regreso</th><td>{{ r.fecha_regreso|date:"d/m/Y"|default:"—" }}</td></tr>
+          <tr><th class="text-muted">Proveedor</th><td>{{ r.proveedor }}</td></tr>
+          <tr><th class="text-muted">Nro. reserva prov.</th><td>{{ r.nro_reserva_proveedor|default:"—" }}</td></tr>
+        </table>
+        <h6 class="text-teal">Descripción</h6>
+        <p>{{ r.descripcion }}</p>
+        {% if voucher.notas_voucher %}
+        <h6 class="text-teal">Notas</h6>
+        <p>{{ voucher.notas_voucher }}</p>
+        {% endif %}
+        {% endwith %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

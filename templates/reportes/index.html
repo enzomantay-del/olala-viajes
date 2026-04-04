@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Reportes{% endblock %}
+{% block topbar_title %}Reportes y Estadísticas{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2><i class="fas fa-chart-bar me-2 text-teal"></i>Reportes</h2>
+</div>
+<div class="row g-3">
+  <div class="col-md-4">
+    <a href="{% url 'reporte_saldos' %}" class="text-decoration-none">
+      <div class="card h-100 card-hover" style="border-top:4px solid var(--teal)">
+        <div class="card-body text-center py-4">
+          <i class="fas fa-balance-scale fa-3x mb-3 text-teal"></i>
+          <h5>Saldos pendientes</h5>
+          <p class="text-muted small">Reservas con cobros pendientes de clientes y pagos pendientes a proveedores.</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'reporte_cobros' %}" class="text-decoration-none">
+      <div class="card h-100" style="border-top:4px solid var(--orange)">
+        <div class="card-body text-center py-4">
+          <i class="fas fa-hand-holding-dollar fa-3x mb-3 text-orange"></i>
+          <h5>Cobros por período</h5>
+          <p class="text-muted small">Listado de cobros realizados con totales por moneda en un período determinado.</p>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-md-4">
+    <a href="{% url 'reporte_pagos' %}" class="text-decoration-none">
+      <div class="card h-100" style="border-top:4px solid #0f766e">
+        <div class="card-body text-center py-4">
+          <i class="fas fa-credit-card fa-3x mb-3" style="color:#0f766e"></i>
+          <h5>Pagos a proveedores</h5>
+          <p class="text-muted small">Listado de pagos realizados a proveedores con totales por moneda.</p>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+{% endblock %}
