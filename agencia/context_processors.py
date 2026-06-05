@@ -1,11 +1,17 @@
 from decimal import Decimal
 
+from django.conf import settings as django_settings
 from django.db.models import Sum, F, DecimalField
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from datetime import timedelta
 
 from .models import Reserva
+
+
+def agencia_sitio(request):
+    """URLs públicas del sitio (Firebase), independientes del host del panel."""
+    return {'public_web_url': django_settings.PUBLIC_WEB_BASE_URL}
 
 
 def alertas_globales(request):

@@ -57,6 +57,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'agencia.context_processors.agencia_sitio',
                 'agencia.context_processors.alertas_globales',
             ],
         },
