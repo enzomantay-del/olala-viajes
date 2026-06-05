@@ -4,6 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Olala! Viajes — Paquetes Turísticos</title>
+  <meta name="description" content="{{ og_description }}">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Olalá Viajes">
+  <meta property="og:title" content="{{ og_title }}">
+  <meta property="og:description" content="{{ og_description }}">
+  <meta property="og:image" content="{{ og_image_url }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="{{ og_url }}">
+  <meta property="og:locale" content="es_AR">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ og_title }}">
+  <meta name="twitter:description" content="{{ og_description }}">
+  <meta name="twitter:image" content="{{ og_image_url }}">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -107,6 +124,8 @@
     .paq-visual.cat-argentina { background: linear-gradient(135deg, #1e3a5f, #2563eb); }
     .paq-visual.cat-brasil { background: linear-gradient(135deg, #14532d, #16a34a); }
     .paq-visual.cat-europa { background: linear-gradient(135deg, #3b0764, #7c3aed); }
+    .paq-visual.cat-playa { background: linear-gradient(135deg, #0c4a6e, #38bdf8); }
+    .paq-visual.cat-caribe { background: linear-gradient(135deg, #9a3412, #fb923c); }
 
     .paq-badge-ja { position: absolute; top: 10px; left: 10px; z-index: 2; background: var(--naranja); color: white; font-size: .65rem; font-weight: 700; padding: 3px 9px; border-radius: 50px; }
     .paq-badge-lugares { position: absolute; top: 10px; right: 10px; z-index: 2; background: rgba(0,0,0,.6); color: white; font-size: .65rem; font-weight: 600; padding: 3px 9px; border-radius: 50px; }
@@ -247,6 +266,9 @@
     <div class="hero-btns">
       <a href="#paquetes" class="btn-naranja">Ver paquetes disponibles</a>
       <a href="https://wa.me/{{ agencia_whatsapp }}?text=Hola!%20Quiero%20consultar%20sobre%20los%20paquetes%20disponibles." target="_blank" class="btn-ghost-w">Escribinos por WhatsApp</a>
+      <button type="button" class="btn-ghost-w btn-compartir-catalogo" id="btn-compartir-catalogo" title="Compartir catálogo por WhatsApp">
+        Compartir catálogo
+      </button>
     </div>
   </div>
 </section>
@@ -263,9 +285,11 @@
 <div class="filtros-wrap">
   <div class="filtros">
     <button class="filtro-btn active" onclick="filtrar('todos', this)">Todos</button>
-    <button class="filtro-btn" onclick="filtrar('termas', this)">♨️ Termas</button>
     <button class="filtro-btn" onclick="filtrar('argentina', this)">🇦🇷 Argentina</button>
     <button class="filtro-btn" onclick="filtrar('brasil', this)">🇧🇷 Brasil</button>
+    <button class="filtro-btn" onclick="filtrar('playa', this)">🏖️ Playa</button>
+    <button class="filtro-btn" onclick="filtrar('caribe', this)">🏝️ Caribe</button>
+    <button class="filtro-btn" onclick="filtrar('termas', this)">♨️ Termas</button>
     <button class="filtro-btn" onclick="filtrar('europa', this)">🌍 Europa & Mundo</button>
   </div>
 </div>
@@ -389,6 +413,7 @@
   </div>
 </section>
 
+<script type="application/json" id="catalogo-share-data">{{ catalogo_share_text_json|safe }}</script>
 <div class="share-toast" id="share-toast">Enlace copiado</div>
 
 <a class="wa-float" href="https://wa.me/{{ agencia_whatsapp }}?text=Hola!%20Quiero%20consultar%20sobre%20los%20paquetes%20de%20Olala%20Viajes." target="_blank">
@@ -399,7 +424,7 @@
   <p style="font-size:1.3rem;font-weight:800;color:white;letter-spacing:1px;margin-bottom:6px;">Olala<span style="color:var(--naranja)">!</span> Viajes</p>
   <p>© 2026 Olala! Viajes · {{ agencia_direccion }}</p>
   <p style="margin-top:4px;">Leg. Nº{{ agencia_leg }} · Disp. Nº{{ agencia_disp }}</p>
-  <a href="{{ panel_url }}" class="footer-panel" title="Panel de gestión Olalá Viajes">
+  <a href="{{ panel_url }}" class="footer-panel" target="_blank" rel="noopener noreferrer" title="Panel de gestión Olalá Viajes">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a5 5 0 00-5 5v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V11a2 2 0 00-2-2h-1V7a5 5 0 00-5-5zm0 2a3 3 0 013 3v2H9V7a3 3 0 013-3z"/></svg>
     Acceso agencia (panel)
   </a>
@@ -427,6 +452,11 @@
     document.getElementById('sin-resultados').classList.toggle('visible', visible === 0);
   }
   const AGENCIA_WHATSAPP = '{{ agencia_whatsapp }}';
+
+  document.getElementById('btn-compartir-catalogo')?.addEventListener('click', function() {
+    const texto = JSON.parse(document.getElementById('catalogo-share-data').textContent);
+    window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+  });
 
   function getShareDataFromBox(box) {
     const el = document.getElementById('share-payload-' + box.dataset.shareId);

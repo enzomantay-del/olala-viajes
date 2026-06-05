@@ -6,7 +6,7 @@ services:
     name: olala-viajes
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput
+    buildCommand: pip install -r requirements.txt && npm install && python manage.py collectstatic --noinput && python manage.py migrate --noinput
     startCommand: gunicorn olala.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
@@ -23,5 +23,6 @@ services:
         value: https://olala-viajes.onrender.com/accounts/login/
       - key: PUBLIC_WEB_BASE_URL
         value: https://olala-viajes.web.app
-      - key: OLALA_FIREBASE_DEPLOY
-        value: "False"
+      # Crear con: firebase.cmd login:ci  →  pegar token en Render (Environment)
+      - key: FIREBASE_TOKEN
+        sync: false

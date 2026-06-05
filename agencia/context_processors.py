@@ -14,6 +14,13 @@ def agencia_sitio(request):
     return {'public_web_url': django_settings.PUBLIC_WEB_BASE_URL}
 
 
+def estado_publicacion_web(request):
+    if not request.user.is_authenticated:
+        return {'estado_publicacion': None}
+    from .publish_status import leer_estado
+    return {'estado_publicacion': leer_estado()}
+
+
 def alertas_globales(request):
     if not request.user.is_authenticated:
         return {'alertas_salidas': 0, 'alertas_saldos': 0}

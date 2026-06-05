@@ -3,6 +3,23 @@
 {% block topbar_title %}Salidas de Operadoras{% endblock %}
 {% block content %}
 
+{% if estado_publicacion %}
+<div class="alert alert-{% if estado_publicacion.state == 'running' %}info{% elif estado_publicacion.state == 'ok' %}success{% else %}warning{% endif %} mb-3" role="alert">
+  {% if estado_publicacion.state == 'running' %}
+    <span class="spinner-border spinner-border-sm me-2"></span>
+  {% elif estado_publicacion.state == 'ok' %}
+    <i class="fas fa-check-circle me-2"></i>
+  {% else %}
+    <i class="fas fa-exclamation-triangle me-2"></i>
+  {% endif %}
+  <strong>Publicación web:</strong> {{ estado_publicacion.message }}
+  {% if estado_publicacion.finished %}<span class="text-muted small ms-2">({{ estado_publicacion.finished }})</span>{% endif %}
+</div>
+{% if estado_publicacion.state == 'running' %}
+<script>setTimeout(function(){ location.reload(); }, 20000);</script>
+{% endif %}
+{% endif %}
+
 <div class="page-header">
   <h2><i class="fas fa-bus me-2 text-teal"></i>Salidas de Operadoras</h2>
   <div class="d-flex gap-2">
@@ -297,7 +314,7 @@ document.getElementById('btn-abrir-wa').addEventListener('click', function() {
 });
 
 function confirmarPublicarWeb() {
-  if (!confirm('¿Publicar la web con los datos actuales?\n\nPuede tardar unos 15–30 segundos (HTML + flyers). No cierres la página hasta que vuelva a Salidas.')) {
+  if (!confirm('¿Publicar la web con los datos actuales?\n\nSe actualizará olala-viajes.web.app en 1–2 minutos. Podés seguir usando el panel; refrescá Salidas para ver el resultado.')) {
     return false;
   }
   var btn = document.getElementById('btn-publicar-web');

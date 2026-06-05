@@ -59,6 +59,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'agencia.context_processors.agencia_sitio',
                 'agencia.context_processors.alertas_globales',
+                'agencia.context_processors.estado_publicacion_web',
             ],
         },
     },
@@ -111,8 +112,8 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
-# Publicar web: deploy a Firebase solo si OLALA_FIREBASE_DEPLOY=True
-OLALA_FIREBASE_DEPLOY = os.environ.get('OLALA_FIREBASE_DEPLOY', 'False').lower() in ('1', 'true', 'yes')
+# Carpeta donde se genera el sitio estático antes de subir a Firebase
+WEB_EXPORT_DIR = BASE_DIR / 'web-export'
 
 # Datos de la agencia
 AGENCIA_NOMBRE = 'Olalá Viajes'
@@ -126,6 +127,8 @@ AGENCIA_DIRECCION = 'Jardín América, Misiones, Argentina'
 # URL pública del sitio estático (Open Graph y enlaces para compartir)
 PUBLIC_WEB_BASE_URL = os.environ.get('PUBLIC_WEB_BASE_URL', 'https://olala-viajes.web.app').rstrip('/')
 
-# URL del panel de gestión (login). Obligatoria en el HTML estático de Firebase.
-# Ejemplo en producción: https://olala-viajes.onrender.com/accounts/login/
-PANEL_PUBLIC_URL = os.environ.get('PANEL_PUBLIC_URL', '').rstrip('/')
+# URL del panel de gestión (login). Debe ser absoluta para el HTML estático de Firebase.
+PANEL_PUBLIC_URL = os.environ.get(
+    'PANEL_PUBLIC_URL',
+    'https://olala-viajes.onrender.com/accounts/login',
+).rstrip('/')

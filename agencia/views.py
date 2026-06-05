@@ -13,6 +13,7 @@ from .models import Cliente, Proveedor, Reserva, ServicioReserva, Cobro, PagoPro
 from .forms import ClienteForm, ProveedorForm, ReservaForm, ServicioFormSet, CobroForm, PagoProveedorForm, ReciboForm, VoucherForm, SalidaForm
 from .pdf_utils import generar_recibo_pdf, generar_voucher_pdf, generar_salidas_pdf
 from .salidas_utils import categorizar_salida, categorizar_salidas
+from .og_catalogo import contexto_og_catalogo
 from .web_publish import generar_sitio_web_estatico, preparar_salida_web, _contexto_agencia
 from .flyer_utils import generar_flyer_salida
 from .salidas_utils import categorizar_salida
@@ -678,6 +679,7 @@ def web_publica(request):
         'es_estatico': False,
         'web_base_url': base_url,
         **_contexto_agencia(request),
+        **contexto_og_catalogo(base_url),
     }
     return render(request, 'web_publica.html', context)
 
@@ -788,57 +790,49 @@ window.location.href = "https://wa.me/?text=" + encodeURIComponent(msg);
     return HttpResponse(html)
 
 
-def _deploy_firebase_en_segundo_plano():
-    """Sube a Firebase sin bloquear la respuesta del navegador."""
-    import subprocess
-    import threading
-    from pathlib import Path
-    from django.conf import settings
+def _ejecutar_publicacion_web():
+    """Genera el sitio y lo sube a Firebase (corre en segundo plano)."""
+    from .firebase_deploy import deploy_olala_hosting
+    from .publish_status import finalizar_publicacion
 
-    def _tarea():
-        firebase_dir = Path(settings.BASE_DIR).parent
-        subprocess.run(
-            ['firebase', 'deploy', '--only', 'hosting:olala', '--project', 'turigest-ja'],
-            cwd=str(firebase_dir),
-            capture_output=True,
-            text=True,
-            timeout=300,
-        )
-
-    threading.Thread(target=_tarea, daemon=True).start()
+    try:
+        _dest, num_salidas, num_flyers = generar_sitio_web_estatico(request=None)
+        deploy_ok, deploy_msg, detalle = deploy_olala_hosting()
+        if deploy_ok:
+            finalizar_publicacion(
+                True,
+                f'Listo: {num_salidas} paquetes y {num_flyers} flyers en olala-viajes.web.app',
+                detalle,
+            )
+        else:
+            finalizar_publicacion(False, deploy_msg, detalle)
+    except Exception as exc:
+        finalizar_publicacion(False, f'Error inesperado: {exc}', '')
 
 
 def publicar_web(request):
-    """Genera el sitio estático (HTML + flyers) y opcionalmente despliega a Firebase."""
-    import time
+    """Inicia publicación en segundo plano (no bloquea el navegador)."""
+    import threading
 
-    inicio = time.perf_counter()
-    dest_dir, num_salidas, num_flyers = generar_sitio_web_estatico(request=request)
-    segundos = round(time.perf_counter() - inicio, 1)
+    from .publish_status import iniciar_publicacion, publicacion_en_curso
 
-    msg_base = (
-        f'Listo en {segundos}s: {num_salidas} paquetes y {num_flyers} flyers en {dest_dir}.'
+    if publicacion_en_curso():
+        messages.warning(
+            request,
+            'Ya hay una publicación en curso. Esperá 1–2 minutos y refrescá esta página.',
+        )
+        return redirect('salidas_lista')
+
+    if not iniciar_publicacion():
+        messages.warning(request, 'No se pudo iniciar la publicación. Intentá de nuevo.')
+        return redirect('salidas_lista')
+
+    threading.Thread(target=_ejecutar_publicacion_web, daemon=True).start()
+    messages.info(
+        request,
+        'Publicación iniciada. En 1–2 minutos refrescá Salidas para ver si terminó. '
+        'La web pública será https://olala-viajes.web.app',
     )
-
-    if django_settings.OLALA_FIREBASE_DEPLOY:
-        _deploy_firebase_en_segundo_plano()
-        messages.success(
-            request,
-            f'{msg_base} Subiendo a olala-viajes.web.app en segundo plano '
-            '(puede tardar 1–2 min; refrescá la web con Ctrl+F5).',
-        )
-    else:
-        aviso_panel = ''
-        if not django_settings.PANEL_PUBLIC_URL:
-            aviso_panel = (
-                ' Configurá PANEL_PUBLIC_URL en .env con la URL de tu panel en internet '
-                'para que el enlace "Acceso agencia" funcione en la web pública.'
-            )
-        messages.success(
-            request,
-            f'{msg_base} Para publicar en Firebase: publicar-web.bat o firebase deploy.{aviso_panel}',
-        )
-
     return redirect('salidas_lista')
 
 

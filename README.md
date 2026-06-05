@@ -27,10 +27,12 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-- Panel: http://127.0.0.1:8000/ (requiere login)
-- Web pública: http://127.0.0.1:8000/web/
+- **Panel (uso diario):** https://olala-viajes.onrender.com/
+- **Web para clientes:** https://olala-viajes.web.app
 
-En Windows podés usar `iniciar.bat`.
+Guía simple: **[FLUJO-SIMPLE.md](FLUJO-SIMPLE.md)**
+
+Desarrollo local (opcional): `iniciar.bat` → http://127.0.0.1:8000/
 
 ## Configuración
 
@@ -41,23 +43,17 @@ Copiá `.env.example` a `.env` (opcional):
 | `DJANGO_SECRET_KEY` | Clave secreta (obligatoria en producción) |
 | `DJANGO_DEBUG` | `False` en producción |
 | `DJANGO_ALLOWED_HOSTS` | Dominios permitidos, separados por coma |
-| `OLALA_FIREBASE_DEPLOY` | `True` para ejecutar `firebase deploy` al publicar la web |
-| `PANEL_PUBLIC_URL` | URL del login del panel en internet (enlace en la web de Firebase) |
+| `FIREBASE_TOKEN` | Token CI para publicar a Firebase desde Render (`firebase login:ci`) |
+| `PANEL_PUBLIC_URL` | URL del login del panel (enlace en la web de Firebase) |
 | `PUBLIC_WEB_BASE_URL` | URL del sitio en Firebase, ej. `https://olala-viajes.web.app` |
 
 Datos de la agencia en `olala/settings.py` (`AGENCIA_*`).
 
-## Panel desde cualquier dispositivo
-
-Firebase solo sirve el catálogo estático. Para gestionar la agencia desde el celular u otra PC, subí Django a un host con internet (p. ej. **Render**). Guía paso a paso: **[DEPLOY-PANEL.md](DEPLOY-PANEL.md)**.
-
-Resumen: desplegá el proyecto → configurá `PANEL_PUBLIC_URL` en Render y en tu `.env` local → **Publicar en web** + `firebase deploy` → en `olala-viajes.web.app` aparece **Acceso agencia (panel)**.
-
 ## Publicar la web
 
-1. En el panel: **Salidas → Publicar en web** genera HTML, páginas por paquete y **flyers JPG** (1080×1920) en `../olala-viajes-web/flyers/`
-2. Descargar un flyer individual: **Salidas** → ícono de imagen en cada fila, o desde la web pública (botón de descarga)
-3. Con `OLALA_FIREBASE_DEPLOY=True` y Firebase CLI instalado, también despliega a **olala-viajes.web.app**
+**Salidas → Publicar en web** en el panel (Render o PC). Actualiza **olala-viajes.web.app** en 1–2 minutos.
+
+Ver **[FLUJO-SIMPLE.md](FLUJO-SIMPLE.md)**. El archivo `publicar-web.bat` es opcional (respaldo en PC).
 
 ## Autor
 

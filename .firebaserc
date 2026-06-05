@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "turigest-ja"
+  },
+  "targets": {
+    "turigest-ja": {
+      "hosting": {
+        "olala": [
+          "olala-viajes"
+        ]
+      }
+    }
+  }
+}

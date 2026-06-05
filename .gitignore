@@ -28,5 +28,9 @@ media/
 .DS_Store
 Thumbs.db
 
-# Sitio estático generado (hermano del repo)
+# Sitio estático generado para Firebase
+web-export/
+.publish_status.json
+
+# Sitio antiguo (fuera del repo, legacy)
 ../olala-viajes-web/

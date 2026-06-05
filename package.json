@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "description": "Firebase CLI para publicar la web desde el panel (Render o PC)",
+  "devDependencies": {
+    "firebase-tools": "^13.35.0"
+  }
+}

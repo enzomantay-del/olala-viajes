@@ -10,6 +10,7 @@ from django.conf import settings as django_settings
 from django.template.loader import render_to_string
 from django.urls import reverse
 
+from .og_catalogo import contexto_og_catalogo, generar_og_catalogo
 from .salidas_utils import categorizar_salidas
 
 MESES_ES = [
@@ -114,14 +115,14 @@ def preparar_salida_web(salida, base_url, modo='django'):
 
 def _url_panel_publico(request=None):
     """URL absoluta del login del panel (para enlaces desde la web estática)."""
-    if django_settings.PANEL_PUBLIC_URL:
-        url = django_settings.PANEL_PUBLIC_URL.rstrip('/')
+    url = django_settings.PANEL_PUBLIC_URL.rstrip('/')
+    if url.startswith('http'):
         if '/accounts/login' not in url:
             url = f'{url}/accounts/login'
         return f'{url}/'
     if request:
         return request.build_absolute_uri(reverse('login'))
-    return '/accounts/login/'
+    return 'https://olala-viajes.onrender.com/accounts/login/'
 
 
 def _contexto_agencia(request=None):
@@ -143,6 +144,36 @@ def _adaptar_html_index_estatico(html):
     html = re.sub(r'href="/web/paquete/(\d+)/"', r'href="paquete/\1.html"', html)
     html = re.sub(r"href='/web/paquete/(\d+)/'", r"href='paquete/\1.html'", html)
     return html
+
+
+def _escribir_redirect_panel(dest_dir):
+    """
+    Página de redirección en /accounts/login/ para Firebase.
+    Si el navegador tiene caché vieja con href="/accounts/login/", igual llega al panel en Render.
+    """
+    panel_url = _url_panel_publico()
+    login_dir = dest_dir / 'accounts' / 'login'
+    login_dir.mkdir(parents=True, exist_ok=True)
+    html = f'''<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="refresh" content="0;url={panel_url}">
+  <title>Panel Olalá Viajes</title>
+  <script>location.replace({json.dumps(panel_url)});</script>
+  <style>
+    body {{ font-family: system-ui, sans-serif; text-align: center; padding: 48px 20px; color: #334155; }}
+    a {{ color: #0e7490; font-weight: 600; }}
+  </style>
+</head>
+<body>
+  <p>Redirigiendo al panel de gestión…</p>
+  <p><a href="{panel_url}">Ir al panel de Olalá Viajes</a></p>
+</body>
+</html>
+'''
+    (login_dir / 'index.html').write_text(html, encoding='utf-8')
 
 
 def _adaptar_html_paquete_estatico(html):
@@ -173,9 +204,10 @@ def generar_sitio_web_estatico(request=None):
         'web_base_url': base_url,
         'es_estatico': True,
         **_contexto_agencia(request),
+        **contexto_og_catalogo(base_url),
     }
 
-    dest_dir = Path(django_settings.BASE_DIR).parent / 'olala-viajes-web'
+    dest_dir = Path(django_settings.WEB_EXPORT_DIR)
     dest_dir.mkdir(exist_ok=True)
     paquete_dir = dest_dir / 'paquete'
     paquete_dir.mkdir(exist_ok=True)
@@ -183,6 +215,7 @@ def generar_sitio_web_estatico(request=None):
     html_index = render_to_string('web_publica.html', ctx, request=request)
     html_index = _adaptar_html_index_estatico(html_index)
     (dest_dir / 'index.html').write_text(html_index, encoding='utf-8')
+    _escribir_redirect_panel(dest_dir)
 
     for s in salidas:
         html_p = render_to_string(
@@ -209,6 +242,8 @@ def generar_sitio_web_estatico(request=None):
         logo_src = img_dir / 'logo-olala.png'
     if logo_src.exists():
         shutil.copy2(logo_src, dest_dir / 'logo.png')
+
+    generar_og_catalogo(dest_dir)
 
     from .flyer_utils import generar_flyers_lote
 
