@@ -1,14 +1,35 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, FileResponse
+from pathlib import Path
 from django.utils import timezone
 from django.db.models import Sum, Q
 from datetime import timedelta, date
 from decimal import Decimal
 
+from django.conf import settings as django_settings
+
 from .models import Cliente, Proveedor, Reserva, ServicioReserva, Cobro, PagoProveedor, Recibo, Voucher, Salida, SIMBOLOS_MONEDA
 from .forms import ClienteForm, ProveedorForm, ReservaForm, ServicioFormSet, CobroForm, PagoProveedorForm, ReciboForm, VoucherForm, SalidaForm
 from .pdf_utils import generar_recibo_pdf, generar_voucher_pdf, generar_salidas_pdf
+from .salidas_utils import categorizar_salida, categorizar_salidas
+from .web_publish import generar_sitio_web_estatico, preparar_salida_web, _contexto_agencia
+from .flyer_utils import generar_flyer_salida
+from .salidas_utils import categorizar_salida
+
+
+def _reservas_activas_qs():
+    return Reserva.objects.filter(
+        estado__in=['PENDIENTE', 'CONFIRMADA', 'EN_CURSO']
+    ).select_related('cliente').prefetch_related('cobros', 'servicios', 'pagos_proveedor')
+
+
+def _salidas_qs(ver_todas=False):
+    qs = Salida.objects.select_related('operadora')
+    if not ver_todas:
+        hoy = timezone.now().date()
+        qs = qs.filter(fecha_salida__gte=hoy)
+    return qs
 
 
 # ─── DASHBOARD ────────────────────────────────────────────────────────────────
@@ -33,7 +54,7 @@ def dashboard(request):
         estado__in=['PENDIENTE', 'CONFIRMADA']
     ).order_by('fecha_salida')
 
-    reservas_activas = Reserva.objects.filter(estado__in=['PENDIENTE', 'CONFIRMADA', 'EN_CURSO'])
+    reservas_activas = list(_reservas_activas_qs())
     con_saldo_cliente = [r for r in reservas_activas if r.saldo_pendiente_cliente > 0]
     con_saldo_proveedor = [r for r in reservas_activas if r.saldo_pendiente_proveedor > 0]
 
@@ -495,9 +516,7 @@ def reportes(request):
 
 
 def reporte_saldos(request):
-    reservas = Reserva.objects.filter(
-        estado__in=['PENDIENTE', 'CONFIRMADA', 'EN_CURSO']
-    ).select_related('cliente', 'proveedor')
+    reservas = list(_reservas_activas_qs())
 
     con_saldo_cliente = [r for r in reservas if r.saldo_pendiente_cliente > 0]
     con_saldo_proveedor = [r for r in reservas if r.saldo_pendiente_proveedor > 0]
@@ -578,17 +597,14 @@ ORDENES_VALIDOS_SALIDAS = {
 
 
 def salidas_lista(request):
-    hoy = timezone.now().date()
-    # Auto-eliminar salidas cuya fecha ya pasó
-    Salida.objects.filter(fecha_salida__lt=hoy).delete()
-
     orden = request.GET.get('orden', 'fecha_salida')
     if orden not in ORDENES_VALIDOS_SALIDAS:
         orden = 'fecha_salida'
     q = request.GET.get('q', '')
     solo_jardin = request.GET.get('jardin', '')
+    ver_todas = request.GET.get('todas', '') == '1'
 
-    salidas = Salida.objects.select_related('operadora')
+    salidas = _salidas_qs(ver_todas=ver_todas)
     if q:
         salidas = salidas.filter(
             Q(nombre_paquete__icontains=q) |
@@ -611,6 +627,7 @@ def salidas_lista(request):
         'precio': float(s.precio) if s.precio else None,
         'simbolo': SIMBOLOS.get(s.moneda, s.moneda),
         'cupos': s.cupos,
+        'agotado': s.agotado,
         'descripcion': s.descripcion,
     } for s in salidas], ensure_ascii=False)
 
@@ -620,12 +637,13 @@ def salidas_lista(request):
         'q': q,
         'orden': orden,
         'solo_jardin': solo_jardin,
+        'ver_todas': ver_todas,
     })
 
 
 def salida_nueva(request):
     if request.method == 'POST':
-        form = SalidaForm(request.POST)
+        form = SalidaForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
             messages.success(request, 'Salida cargada correctamente.')
@@ -638,7 +656,7 @@ def salida_nueva(request):
 def salida_editar(request, pk):
     salida = get_object_or_404(Salida, pk=pk)
     if request.method == 'POST':
-        form = SalidaForm(request.POST, instance=salida)
+        form = SalidaForm(request.POST, request.FILES, instance=salida)
         if form.is_valid():
             form.save()
             messages.success(request, 'Salida actualizada correctamente.')
@@ -646,6 +664,55 @@ def salida_editar(request, pk):
     else:
         form = SalidaForm(instance=salida)
     return render(request, 'salidas/formulario.html', {'form': form, 'titulo': 'Editar salida', 'salida': salida})
+
+
+def web_publica(request):
+    hoy = timezone.now().date()
+    salidas = list(Salida.objects.filter(fecha_salida__gte=hoy).order_by('fecha_salida'))
+    categorizar_salidas(salidas)
+    base_url = django_settings.PUBLIC_WEB_BASE_URL
+    for s in salidas:
+        preparar_salida_web(s, base_url, modo='django')
+    context = {
+        'salidas': salidas,
+        'es_estatico': False,
+        'web_base_url': base_url,
+        **_contexto_agencia(request),
+    }
+    return render(request, 'web_publica.html', context)
+
+
+def web_publica_paquete(request, pk):
+    salida = get_object_or_404(Salida, pk=pk)
+    categorizar_salida(salida)
+    base_url = django_settings.PUBLIC_WEB_BASE_URL
+    preparar_salida_web(salida, base_url, modo='django')
+    context = {
+        'salida': salida,
+        's': salida,
+        'es_estatico': False,
+        'web_base_url': base_url,
+        **_contexto_agencia(request),
+    }
+    return render(request, 'web_publica_paquete.html', context)
+
+
+def salida_flyer(request, pk):
+    """Descarga o genera el flyer JPG 9:16 del paquete."""
+    from django.conf import settings
+
+    salida = get_object_or_404(Salida.objects.select_related('operadora'), pk=pk)
+    categorizar_salida(salida)
+    ruta = Path(settings.MEDIA_ROOT) / 'flyers' / f'{salida.pk}.jpg'
+    if not ruta.exists():
+        generar_flyer_salida(salida, ruta)
+    nombre = f'olala-{salida.pk}-{salida.nombre_paquete[:30].replace(" ", "-")}.jpg'
+    return FileResponse(
+        ruta.open('rb'),
+        content_type='image/jpeg',
+        as_attachment=True,
+        filename=nombre,
+    )
 
 
 def salida_eliminar(request, pk):
@@ -660,14 +727,13 @@ def salida_eliminar(request, pk):
 def salidas_whatsapp(request):
     import json as _json
 
-    hoy = timezone.now().date()
-    Salida.objects.filter(fecha_salida__lt=hoy).delete()
-
     pks = request.GET.getlist('pk')
     if pks:
-        salidas = list(Salida.objects.select_related('operadora').filter(pk__in=pks).order_by('fecha_salida'))
+        salidas = list(
+            Salida.objects.select_related('operadora').filter(pk__in=pks).order_by('fecha_salida')
+        )
     else:
-        salidas = list(Salida.objects.select_related('operadora').order_by('fecha_salida'))
+        salidas = list(_salidas_qs(ver_todas=False).order_by('fecha_salida'))
 
     MESES = ['enero','febrero','marzo','abril','mayo','junio',
              'julio','agosto','septiembre','octubre','noviembre','diciembre']
@@ -688,7 +754,10 @@ def salidas_whatsapp(request):
             simbolo = {'ARS': '$', 'USD': 'U$S', 'BRL': 'R$'}.get(s.moneda, s.moneda)
             lineas.append(f'💰 Precio: {simbolo} {s.precio:,.0f}')
         if s.cupos:
-            lineas.append(f'🪑 Cupos disponibles: {s.cupos}')
+            if s.cupos < 10:
+                lineas.append(f'🔥 *¡ÚLTIMOS {s.cupos} LUGARES DISPONIBLES!*')
+            else:
+                lineas.append(f'🪑 Lugares disponibles: {s.cupos}')
         if s.descripcion:
             lineas.append(f'📝 {s.descripcion[:150]}')
         bloques.append('\n'.join(lineas))
@@ -701,7 +770,7 @@ def salidas_whatsapp(request):
         f'{separador}\n\n'
         f'{cuerpo}\n\n'
         f'{separador}\n\n'
-        '🔥 ¡Los cupos son *limitados*! No dejes pasar esta oportunidad.\n\n'
+        '🔥 ¡Los lugares son *limitados*! No dejes pasar esta oportunidad.\n\n'
         '📲 Respondé este mensaje o escribínos para reservar tu lugar. ¡Con gusto te asesoramos! 😊'
     )
 
@@ -719,17 +788,69 @@ window.location.href = "https://wa.me/?text=" + encodeURIComponent(msg);
     return HttpResponse(html)
 
 
-def salidas_pdf(request):
-    hoy = timezone.now().date()
-    Salida.objects.filter(fecha_salida__lt=hoy).delete()
+def _deploy_firebase_en_segundo_plano():
+    """Sube a Firebase sin bloquear la respuesta del navegador."""
+    import subprocess
+    import threading
+    from pathlib import Path
+    from django.conf import settings
 
+    def _tarea():
+        firebase_dir = Path(settings.BASE_DIR).parent
+        subprocess.run(
+            ['firebase', 'deploy', '--only', 'hosting:olala', '--project', 'turigest-ja'],
+            cwd=str(firebase_dir),
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+
+    threading.Thread(target=_tarea, daemon=True).start()
+
+
+def publicar_web(request):
+    """Genera el sitio estático (HTML + flyers) y opcionalmente despliega a Firebase."""
+    import time
+
+    inicio = time.perf_counter()
+    dest_dir, num_salidas, num_flyers = generar_sitio_web_estatico(request=request)
+    segundos = round(time.perf_counter() - inicio, 1)
+
+    msg_base = (
+        f'Listo en {segundos}s: {num_salidas} paquetes y {num_flyers} flyers en {dest_dir}.'
+    )
+
+    if django_settings.OLALA_FIREBASE_DEPLOY:
+        _deploy_firebase_en_segundo_plano()
+        messages.success(
+            request,
+            f'{msg_base} Subiendo a olala-viajes.web.app en segundo plano '
+            '(puede tardar 1–2 min; refrescá la web con Ctrl+F5).',
+        )
+    else:
+        aviso_panel = ''
+        if not django_settings.PANEL_PUBLIC_URL:
+            aviso_panel = (
+                ' Configurá PANEL_PUBLIC_URL en .env con la URL de tu panel en internet '
+                'para que el enlace "Acceso agencia" funcione en la web pública.'
+            )
+        messages.success(
+            request,
+            f'{msg_base} Para publicar en Firebase: publicar-web.bat o firebase deploy.{aviso_panel}',
+        )
+
+    return redirect('salidas_lista')
+
+
+def salidas_pdf(request):
     orden = request.GET.get('orden', 'fecha_salida')
     if orden not in ORDENES_VALIDOS_SALIDAS:
         orden = 'fecha_salida'
     q = request.GET.get('q', '')
     solo_jardin = request.GET.get('jardin', '')
+    ver_todas = request.GET.get('todas', '') == '1'
 
-    salidas = Salida.objects.select_related('operadora')
+    salidas = _salidas_qs(ver_todas=ver_todas)
     if q:
         salidas = salidas.filter(
             Q(nombre_paquete__icontains=q) |

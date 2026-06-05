@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ salida.nombre_paquete }} — Olalá Viajes</title>
+  <meta name="description" content="{{ salida.og_description }}">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Olalá Viajes">
+  <meta property="og:title" content="{{ salida.nombre_paquete }} — Olalá Viajes">
+  <meta property="og:description" content="{{ salida.og_description }}">
+  <meta property="og:image" content="{{ salida.imagen_url_absoluta }}">
+  <meta property="og:url" content="{{ salida.paquete_url }}">
+  <meta property="og:locale" content="es_AR">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ salida.nombre_paquete }}">
+  <meta name="twitter:description" content="{{ salida.og_description }}">
+  <meta name="twitter:image" content="{{ salida.imagen_url_absoluta }}">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root { --teal:#0e7490; --naranja:#f97316; --dark:#0f172a; --texto:#1e293b; --texto-s:#64748b; --borde:#e2e8f0; --fondo:#f8fafc; --blanco:#fff; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'Poppins',sans-serif; color:var(--texto); background:var(--fondo); line-height:1.6; }
+    a { color:var(--teal); text-decoration:none; font-weight:600; }
+    .navbar { position:fixed; top:0; left:0; right:0; z-index:100; background:var(--dark); padding:0 20px; height:64px; display:flex; align-items:center; justify-content:space-between; }
+    .nav-logo { height:42px; }
+    .nav-back { color:rgba(255,255,255,.85); font-size:.88rem; }
+    .nav-back:hover { color:var(--naranja); }
+    .detalle-wrap { max-width:720px; margin:0 auto; padding:88px 20px 48px; }
+    .detalle-hero { border-radius:14px; overflow:hidden; margin-bottom:20px; background:var(--dark); position:relative; }
+    .detalle-hero img { width:100%; max-height:360px; object-fit:cover; display:block; }
+    .detalle-hero .emoji-fallback { font-size:4rem; padding:80px; text-align:center; display:block; }
+    .detalle-cat { font-size:.72rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--teal); margin-bottom:6px; }
+    .detalle-titulo { font-size:1.55rem; font-weight:800; line-height:1.25; margin-bottom:12px; }
+    .detalle-chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+    .chip { background:var(--blanco); border:1px solid var(--borde); font-size:.8rem; padding:6px 12px; border-radius:50px; color:var(--texto-s); }
+    .detalle-precio { background:var(--blanco); border:1px solid var(--borde); border-radius:12px; padding:16px 18px; margin-bottom:16px; }
+    .precio-valor { font-size:1.6rem; font-weight:800; color:var(--teal); }
+    .detalle-servicios { background:var(--blanco); border:1px solid var(--borde); border-radius:12px; padding:18px; margin-bottom:16px; }
+    .detalle-servicios h2 { font-size:.85rem; text-transform:uppercase; letter-spacing:.08em; color:var(--teal); margin-bottom:10px; }
+    .detalle-servicios ul { list-style:none; }
+    .detalle-servicios li { font-size:.9rem; color:var(--texto-s); padding:4px 0 4px 22px; position:relative; }
+    .detalle-servicios li::before { content:'✓'; position:absolute; left:0; color:#22c55e; font-weight:700; }
+    .detalle-desc { font-size:.92rem; color:var(--texto-s); margin-bottom:16px; white-space:pre-line; }
+    .paq-share { margin-bottom:18px; }
+    .paq-share-label { display:block; font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--texto-s); margin-bottom:8px; }
+    .paq-share-btns { display:flex; gap:8px; flex-wrap:wrap; }
+    .btn-share { width:42px; height:42px; border:none; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; color:white; transition:transform .15s, opacity .15s; }
+    .btn-share:hover { transform:translateY(-2px); opacity:.92; }
+    .btn-share-wa { background:#25D366; }
+    .btn-share-fb { background:#1877F2; }
+    .btn-share-ig { background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); }
+    .btn-share-copy { background:#475569; }
+    .btn-share-flyer { background:#0e7490; text-decoration:none; }
+    .btn-flyer-grande { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; background:var(--teal); color:white; font-family:inherit; font-size:.95rem; font-weight:700; padding:13px; border-radius:10px; text-decoration:none; margin-bottom:12px; transition:background .2s; }
+    .btn-flyer-grande:hover { background:#0c6e7c; color:white; }
+    .btn-consultar-grande { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; background:#25D366; color:white; font-family:inherit; font-size:1rem; font-weight:700; padding:14px; border:none; border-radius:10px; cursor:pointer; margin-top:8px; }
+    .btn-consultar-grande:hover { background:#1eb857; }
+    .share-toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--dark); color:white; padding:10px 20px; border-radius:8px; font-size:.85rem; opacity:0; pointer-events:none; transition:opacity .25s; z-index:200; }
+    .share-toast.show { opacity:1; }
+    .agotado-banner { background:#b91c1c; color:white; text-align:center; padding:10px; font-weight:800; letter-spacing:.08em; }
+    footer.paq-footer { background:#050d1a; padding:22px 20px 28px; text-align:center; color:rgba(255,255,255,.35); font-size:.78rem; margin-top:32px; }
+    footer.paq-footer .footer-panel {
+      display:inline-flex; align-items:center; gap:8px; margin-top:12px;
+      padding:10px 18px; border-radius:8px; border:1px solid rgba(255,255,255,.2);
+      color:rgba(255,255,255,.75); font-size:.8rem; font-weight:600;
+    }
+    footer.paq-footer .footer-panel:hover { background:rgba(14,116,144,.35); color:white; }
+  </style>
+</head>
+<body>
+
+{% load static %}
+<nav class="navbar">
+  <a href="{% if es_estatico %}../index.html{% else %}{% url 'web_publica' %}{% endif %}" class="nav-back">← Todos los paquetes</a>
+  <img src="{% if es_estatico %}../logo.png{% else %}{% static 'img/logo-olala.png' %}{% endif %}" alt="Olalá Viajes" class="nav-logo">
+</nav>
+
+<main class="detalle-wrap">
+  {% if salida.agotado %}<div class="agotado-banner">¡AGOTADO!</div>{% endif %}
+
+  <div class="detalle-hero">
+    {% if salida.foto or salida.imagen_src %}
+      <img src="{% if es_estatico %}../{{ salida.imagen_src }}{% else %}{{ salida.imagen_src }}{% endif %}" alt="{{ salida.nombre_paquete }}">
+    {% else %}
+      <span class="emoji-fallback">{{ salida.emoji }}</span>
+    {% endif %}
+  </div>
+
+  <div class="detalle-cat">{{ salida.cat_label }}</div>
+  <h1 class="detalle-titulo">{{ salida.nombre_paquete }}</h1>
+
+  <div class="detalle-chips">
+    <span class="chip">📅 {{ salida.fecha_legible }}</span>
+    {% if salida.lugar_salida %}<span class="chip">📍 Sale de {{ salida.lugar_salida }}</span>{% endif %}
+    {% if salida.pasa_por_jardin_america %}<span class="chip">🌿 Pasa por Jardín América</span>{% endif %}
+    {% if salida.vacaciones_invierno %}<span class="chip">❄️ Vacaciones de Invierno</span>{% endif %}
+    {% if salida.cupos and not salida.agotado %}
+      <span class="chip">🪑 {% if salida.cupos < 10 %}¡Últimos {{ salida.cupos }} lugares!{% else %}{{ salida.cupos }} lugares{% endif %}</span>
+    {% endif %}
+  </div>
+
+  {% if salida.descripcion %}
+  <p class="detalle-desc">{{ salida.descripcion }}</p>
+  {% endif %}
+
+  {% if salida.precio %}
+  <div class="detalle-precio">
+    <div style="font-size:.75rem;color:var(--texto-s);">Precio desde (por persona)</div>
+    <div class="precio-valor">
+      {% if salida.moneda == "ARS" %}${% elif salida.moneda == "USD" %}U$S{% else %}R${% endif %}
+      {{ salida.precio|floatformat:0 }} <span style="font-size:.9rem;font-weight:600;color:var(--texto-s);">{{ salida.moneda }}</span>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if salida.servicios_incluidos %}
+  <div class="detalle-servicios">
+    <h2>Servicios incluidos</h2>
+    <ul>
+      {% for linea in salida.servicios_incluidos.splitlines %}
+        {% if linea.strip %}<li>{{ linea.strip }}</li>{% endif %}
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% include 'web_share_buttons.html' with salida=salida %}
+
+  <a href="{{ salida.flyer_href }}" class="btn-flyer-grande" download target="_blank" rel="noopener">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-4-8l-4 4-4-4h3V7h2v4h3z"/></svg>
+    Descargar flyer para Instagram / WhatsApp
+  </a>
+
+  {% if not salida.agotado %}
+  <button type="button" class="btn-consultar-grande" onclick="consultarPaquete()">
+    Consultar por WhatsApp
+  </button>
+  {% endif %}
+</main>
+
+<div class="share-toast" id="share-toast">Enlace copiado</div>
+
+<script>
+  const AGENCIA_WHATSAPP = '{{ agencia_whatsapp }}';
+
+  function getShareDataFromBox(box) {
+    const el = document.getElementById('share-payload-' + box.dataset.shareId);
+    return el ? JSON.parse(el.textContent) : null;
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('share-toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function compartirWhatsApp(data) {
+    const msg = data.text + '\n' + data.url;
+    window.open('https://wa.me/' + AGENCIA_WHATSAPP + '?text=' + encodeURIComponent(msg), '_blank');
+  }
+
+  function compartirFacebook(data) {
+    window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(data.url), '_blank', 'width=600,height=500');
+  }
+
+  async function compartirInstagram(data) {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: data.title, text: data.text, url: data.url });
+        return;
+      } catch (e) { if (e.name === 'AbortError') return; }
+    }
+    try {
+      await navigator.clipboard.writeText(data.url);
+      showToast('Enlace copiado. Pegalo en Instagram Stories o en tu bio.');
+    } catch (e) {
+      prompt('Copiá este enlace para Instagram:', data.url);
+    }
+  }
+
+  async function copiarEnlace(data) {
+    try {
+      await navigator.clipboard.writeText(data.url);
+      showToast('Enlace copiado al portapapeles');
+    } catch (e) {
+      prompt('Copiá este enlace:', data.url);
+    }
+  }
+
+  document.querySelectorAll('.paq-share').forEach(function(box) {
+    box.querySelector('.btn-share-wa')?.addEventListener('click', function() {
+      const d = getShareDataFromBox(box);
+      if (d) compartirWhatsApp(d);
+    });
+    box.querySelector('.btn-share-fb')?.addEventListener('click', function() {
+      const d = getShareDataFromBox(box);
+      if (d) compartirFacebook(d);
+    });
+    box.querySelector('.btn-share-ig')?.addEventListener('click', function() {
+      const d = getShareDataFromBox(box);
+      if (d) compartirInstagram(d);
+    });
+    box.querySelector('.btn-share-copy')?.addEventListener('click', function() {
+      const d = getShareDataFromBox(box);
+      if (d) copiarEnlace(d);
+    });
+  });
+
+  function consultarPaquete() {
+    const box = document.querySelector('.paq-share');
+    const d = getShareDataFromBox(box);
+    if (d) window.open('https://wa.me/' + AGENCIA_WHATSAPP + '?text=' + encodeURIComponent(d.text), '_blank');
+  }
+</script>
+
+<footer class="paq-footer">
+  <p>© 2026 Olalá! Viajes · {{ agencia_direccion }}</p>
+  <a href="{{ panel_url }}" class="footer-panel">Acceso agencia (panel)</a>
+</footer>
+</body>
+</html>

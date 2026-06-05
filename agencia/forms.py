@@ -158,7 +158,8 @@ class SalidaForm(forms.ModelForm):
         model = Salida
         fields = [
             'operadora', 'nombre_paquete', 'fecha_salida', 'lugar_salida',
-            'pasa_por_jardin_america', 'descripcion', 'precio', 'moneda', 'cupos', 'notas'
+            'pasa_por_jardin_america', 'descripcion', 'servicios_incluidos',
+            'foto', 'precio', 'moneda', 'cupos', 'vacaciones_invierno', 'agotado', 'notas'
         ]
         widgets = {
             'operadora': forms.Select(attrs={'class': 'form-select'}),
@@ -166,9 +167,13 @@ class SalidaForm(forms.ModelForm):
             'fecha_salida': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
             'lugar_salida': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Posadas, Puerto Iguazú...'}),
             'pasa_por_jardin_america': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Itinerario, incluye, no incluye...'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción del paquete para mostrar en la web...'}),
+            'servicios_incluidos': forms.Textarea(attrs={'class': 'form-control', 'rows': 5, 'placeholder': 'Un servicio por línea:\nTraslado de ida y vuelta\nAlojamiento en hotel 3 estrellas\nDesayuno incluido\n...'}),
+            'foto': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'precio': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
             'moneda': forms.Select(attrs={'class': 'form-select'}),
             'cupos': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+            'vacaciones_invierno': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'agotado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'notas': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }

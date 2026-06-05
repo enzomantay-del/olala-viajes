@@ -9,6 +9,10 @@
     <a href="{% url 'salidas_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-outline-secondary" target="_blank">
       <i class="fas fa-file-pdf me-1"></i>PDF
     </a>
+    <a href="{% url 'publicar_web' %}" class="btn btn-primary" id="btn-publicar-web"
+       onclick="return confirmarPublicarWeb()">
+      <i class="fas fa-globe me-1"></i>Publicar en web
+    </a>
     <a href="{% url 'salida_nueva' %}" class="btn btn-teal"><i class="fas fa-plus me-1"></i>Nueva salida</a>
   </div>
 </div>
@@ -33,6 +37,10 @@
         <div class="form-check mt-1">
           <input class="form-check-input" type="checkbox" name="jardin" value="1" id="chkJardin" {% if solo_jardin == '1' %}checked{% endif %}>
           <label class="form-check-label" for="chkJardin">Solo Jardín América</label>
+        </div>
+        <div class="form-check mt-1">
+          <input class="form-check-input" type="checkbox" name="todas" value="1" id="chkTodas" {% if ver_todas %}checked{% endif %}>
+          <label class="form-check-label" for="chkTodas">Incluir vencidas</label>
         </div>
       </div>
       <div class="col-md-2 d-flex gap-2">
@@ -61,7 +69,8 @@
             <th>Lugar de salida</th>
             <th class="text-center">Jardín Amér.</th>
             <th>Precio</th>
-            <th>Cupos</th>
+            <th>Lugares</th>
+            <th class="text-center">Estado</th>
             <th class="text-center">Acciones</th>
           </tr>
         </thead>
@@ -96,6 +105,17 @@
             </td>
             <td>{{ s.cupos|default:"—" }}</td>
             <td class="text-center">
+              {% if s.agotado %}
+                <span class="badge bg-danger">AGOTADO</span>
+              {% else %}
+                <span class="badge bg-success">Disponible</span>
+              {% endif %}
+              {% if s.vacaciones_invierno %}
+                <span class="badge bg-info text-dark ms-1">❄️ Vac. Invierno</span>
+              {% endif %}
+            </td>
+            <td class="text-center text-nowrap">
+              <a href="{% url 'salida_flyer' s.pk %}" class="btn btn-sm btn-outline-primary" title="Descargar flyer JPG (9:16)"><i class="fas fa-image"></i></a>
               <a href="{% url 'salida_editar' s.pk %}" class="btn btn-sm btn-outline-secondary" title="Editar"><i class="fas fa-edit"></i></a>
               <a href="{% url 'salida_eliminar' s.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar"><i class="fas fa-trash"></i></a>
             </td>
@@ -103,7 +123,7 @@
           {% endwith %}
           {% empty %}
           <tr>
-            <td colspan="10" class="text-center text-muted py-4">
+            <td colspan="11" class="text-center text-muted py-4">
               <i class="fas fa-bus fa-2x mb-2 d-block opacity-25"></i>
               No hay salidas cargadas{% if q or solo_jardin %} con los filtros aplicados{% endif %}.
             </td>
@@ -214,7 +234,7 @@ function buildMensaje(pks) {
     sep + '\n\n' +
     cuerpo + '\n\n' +
     sep + '\n\n' +
-    E.fuego + ' \xa1Los cupos son *limitados*! No dejes pasar esta oportunidad.\n\n' +
+    E.fuego + ' \xa1Los lugares son *limitados*! No dejes pasar esta oportunidad.\n\n' +
     E.cel + ' Respond\xe9 este mensaje o escrib\xednos para reservar tu lugar. \xa1Con gusto te asesoramos! ' + E.smile
   );
 }
@@ -275,5 +295,17 @@ document.getElementById('btn-copiar').addEventListener('click', function() {
 document.getElementById('btn-abrir-wa').addEventListener('click', function() {
   window.open('https://web.whatsapp.com/', '_blank');
 });
+
+function confirmarPublicarWeb() {
+  if (!confirm('¿Publicar la web con los datos actuales?\n\nPuede tardar unos 15–30 segundos (HTML + flyers). No cierres la página hasta que vuelva a Salidas.')) {
+    return false;
+  }
+  var btn = document.getElementById('btn-publicar-web');
+  if (btn) {
+    btn.classList.add('disabled');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Publicando…';
+  }
+  return true;
+}
 </script>
 {% endblock %}

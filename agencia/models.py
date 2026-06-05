@@ -1,6 +1,21 @@
 from django.db import models
 from django.utils import timezone
 from decimal import Decimal
+import unicodedata
+import re
+import os
+
+
+def _sanitizar_nombre_foto(instance, filename):
+    """Sanitiza el nombre del archivo: elimina tildes y caracteres especiales."""
+    nombre, ext = os.path.splitext(filename)
+    # Normalizar unicode y eliminar acentos
+    nombre = unicodedata.normalize('NFKD', nombre)
+    nombre = nombre.encode('ascii', 'ignore').decode('ascii')
+    # Reemplazar espacios y chars no alfanuméricos por guión bajo
+    nombre = re.sub(r'[^\w\-]', '_', nombre)
+    nombre = re.sub(r'_+', '_', nombre).strip('_')
+    return f'salidas/{nombre}{ext.lower()}'
 
 MONEDAS = [
     ('ARS', 'Pesos (ARS)'),
@@ -306,9 +321,13 @@ class Salida(models.Model):
     lugar_salida = models.CharField('Lugar de salida', max_length=200)
     pasa_por_jardin_america = models.BooleanField('Pasa por Jardín América', default=False)
     descripcion = models.TextField('Descripción / Itinerario', blank=True)
+    servicios_incluidos = models.TextField('Servicios incluidos', blank=True, help_text='Un servicio por línea. Ej: Traslado de ida y vuelta\nAlojamiento en hotel 3 estrellas\nDesayuno incluido')
+    foto = models.ImageField('Foto del paquete', upload_to=_sanitizar_nombre_foto, blank=True, null=True)
     precio = models.DecimalField('Precio', max_digits=12, decimal_places=2, null=True, blank=True)
     moneda = models.CharField('Moneda', max_length=3, choices=MONEDAS, default='ARS')
-    cupos = models.PositiveIntegerField('Cupos disponibles', null=True, blank=True)
+    cupos = models.PositiveIntegerField('Lugares disponibles', null=True, blank=True)
+    vacaciones_invierno = models.BooleanField('Vacaciones de invierno', default=False)
+    agotado = models.BooleanField('Agotado', default=False)
     notas = models.TextField('Notas internas', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

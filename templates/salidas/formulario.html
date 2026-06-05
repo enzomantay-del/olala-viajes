@@ -4,7 +4,7 @@
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-lg-8">
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
       <div class="form-section">
         <div class="form-section-title"><i class="fas fa-bus me-2"></i>Datos de la salida</div>
@@ -29,6 +29,10 @@
             {{ form.pasa_por_jardin_america }}
             <label class="form-check-label fw-semibold">Pasa por Jardín América</label>
           </div>
+          <div class="col-12 d-flex align-items-center gap-2 mt-1">
+            {{ form.vacaciones_invierno }}
+            <label class="form-check-label fw-semibold">Salida de vacaciones de invierno</label>
+          </div>
         </div>
       </div>
 
@@ -39,6 +43,20 @@
             <label class="form-label">Descripción / Itinerario</label>
             {{ form.descripcion }}
           </div>
+          <div class="col-12">
+            <label class="form-label">Servicios incluidos <small class="text-muted">(uno por línea — se muestran en la web)</small></label>
+            {{ form.servicios_incluidos }}
+          </div>
+          <div class="col-12">
+            <label class="form-label">Foto del paquete <small class="text-muted">(se muestra en la web)</small></label>
+            {{ form.foto }}
+            {% if form.instance.foto %}
+              <div class="mt-2">
+                <img src="{{ form.instance.foto.url }}" alt="Foto actual" style="max-height:120px; border-radius:8px;">
+                <small class="text-muted d-block mt-1">Foto actual — subí una nueva para reemplazarla</small>
+              </div>
+            {% endif %}
+          </div>
           <div class="col-md-4">
             <label class="form-label">Precio</label>
             {{ form.precio }}
@@ -48,8 +66,12 @@
             {{ form.moneda }}
           </div>
           <div class="col-md-3">
-            <label class="form-label">Cupos disponibles</label>
+            <label class="form-label">Lugares disponibles</label>
             {{ form.cupos }}
+          </div>
+          <div class="col-12 d-flex align-items-center gap-2 mt-1">
+            {{ form.agotado }}
+            <label class="form-check-label fw-semibold text-danger">Marcar como AGOTADO <small class="text-muted fw-normal">(aparece en la web)</small></label>
           </div>
           <div class="col-12">
             <label class="form-label">Notas internas</label>

@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Olala! Viajes — Paquetes Turísticos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --teal:       #0e7490;
+      --teal-med:   #0891b2;
+      --teal-claro: #e0f2fe;
+      --naranja:    #f97316;
+      --dark:       #0f172a;
+      --texto:      #1e293b;
+      --texto-s:    #64748b;
+      --borde:      #e2e8f0;
+      --fondo:      #f8fafc;
+      --blanco:     #ffffff;
+      --radio:      12px;
+      --trans:      .22s ease;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Poppins', sans-serif; color: var(--texto); background: var(--fondo); line-height: 1.6; }
+    a { text-decoration: none; color: inherit; }
+    img { max-width: 100%; height: auto; display: block; }
+
+    /* NAVBAR */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: var(--dark); padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 68px; box-shadow: 0 2px 16px rgba(0,0,0,.25);
+    }
+    .nav-logo { height: 48px; width: auto; }
+    .nav-logo-txt { font-size: 1.4rem; font-weight: 800; color: white; letter-spacing: 1px; }
+    .nav-logo-txt span { color: var(--naranja); }
+    .nav-links { list-style: none; display: flex; gap: 1.75rem; }
+    .nav-links a { color: rgba(255,255,255,.75); font-size: .88rem; font-weight: 500; transition: color var(--trans); }
+    .nav-links a:hover { color: var(--naranja); }
+    .nav-wa {
+      display: flex; align-items: center; gap: 8px;
+      background: #25D366; color: white; font-size: .85rem; font-weight: 600;
+      padding: 9px 18px; border-radius: 8px; transition: background var(--trans);
+    }
+    .nav-wa:hover { background: #1eb857; }
+    .nav-hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 4px; }
+    .nav-hamburger span { display: block; width: 24px; height: 2px; background: white; border-radius: 2px; transition: all .25s; }
+    .nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-hamburger.open span:nth-child(2) { opacity: 0; }
+    .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    .mobile-menu { display: none; position: fixed; inset: 0; z-index: 99; background: rgba(15,23,42,.97); flex-direction: column; align-items: center; justify-content: center; gap: 1.75rem; }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a { color: rgba(255,255,255,.85); font-size: 1.3rem; font-weight: 600; }
+
+    /* HERO */
+    .hero {
+      min-height: 440px; padding: 120px 24px 60px;
+      background: linear-gradient(135deg, var(--dark) 0%, #0c3547 55%, var(--teal) 100%);
+      display: flex; align-items: center; justify-content: center; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 70% 50%, rgba(249,115,22,.12) 0%, transparent 60%); }
+    .hero-inner { position: relative; z-index: 1; max-width: 680px; }
+    .hero-badge { display: inline-block; background: rgba(249,115,22,.2); border: 1px solid rgba(249,115,22,.4); color: #fdba74; font-size: .75rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; padding: 5px 14px; border-radius: 50px; margin-bottom: 1.25rem; }
+    .hero h1 { font-size: clamp(1.9rem, 4.5vw, 3rem); font-weight: 800; color: white; line-height: 1.15; margin-bottom: 1rem; }
+    .hero h1 span { color: var(--naranja); }
+    .hero p { color: rgba(255,255,255,.72); font-size: 1rem; margin-bottom: 2rem; line-height: 1.7; }
+    .hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn-naranja { background: var(--naranja); color: white; font-weight: 700; font-size: .92rem; padding: 12px 26px; border-radius: 9px; transition: background var(--trans), transform var(--trans); }
+    .btn-naranja:hover { background: #ea6c0a; transform: translateY(-2px); }
+    .btn-ghost-w { background: transparent; color: white; border: 1.5px solid rgba(255,255,255,.4); font-weight: 600; font-size: .92rem; padding: 12px 26px; border-radius: 9px; transition: border-color var(--trans); }
+    .btn-ghost-w:hover { border-color: white; }
+
+    /* STATS */
+    .stats-band { background: var(--teal); padding: 28px 24px; }
+    .stats-inner { max-width: 1160px; margin: 0 auto; display: flex; justify-content: space-around; flex-wrap: wrap; gap: 16px; }
+    .stat-item { text-align: center; color: white; }
+    .stat-num { font-size: 1.8rem; font-weight: 800; line-height: 1; }
+    .stat-lbl { font-size: .78rem; opacity: .8; margin-top: 3px; }
+
+    /* FILTROS */
+    .filtros-wrap { background: var(--blanco); border-bottom: 1px solid var(--borde); position: sticky; top: 68px; z-index: 50; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+    .filtros { max-width: 1160px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .filtro-btn { background: var(--fondo); border: 1.5px solid var(--borde); color: var(--texto-s); font-family: 'Poppins', sans-serif; font-size: .82rem; font-weight: 600; padding: 7px 16px; border-radius: 50px; cursor: pointer; transition: all var(--trans); white-space: nowrap; }
+    .filtro-btn:hover { border-color: var(--teal); color: var(--teal); }
+    .filtro-btn.active { background: var(--teal); border-color: var(--teal); color: white; }
+
+    /* PAQUETES */
+    .paquetes-section { max-width: 1160px; margin: 0 auto; padding: 36px 24px 56px; }
+    .paquetes-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px; flex-wrap: wrap; gap: 10px; }
+    .paquetes-titulo { font-size: 1.35rem; font-weight: 700; }
+    .paquetes-sub { font-size: .82rem; color: var(--texto-s); margin-top: 2px; }
+    #resultado-count { font-size: .85rem; color: var(--texto-s); }
+    .paquetes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+    .paq-card { background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio); overflow: hidden; transition: transform var(--trans), box-shadow var(--trans); display: flex; flex-direction: column; }
+    .paq-card:hover { transform: translateY(-5px); box-shadow: 0 16px 40px rgba(14,116,144,.13); }
+    .paq-card.oculto { display: none; }
+
+    .paq-visual { height: 160px; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; position: relative; overflow: hidden; }
+    .paq-visual img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .paq-visual .emoji-bg { position: relative; z-index: 1; }
+    .paq-visual.cat-termas { background: linear-gradient(135deg, #164e63, #0e7490); }
+    .paq-visual.cat-argentina { background: linear-gradient(135deg, #1e3a5f, #2563eb); }
+    .paq-visual.cat-brasil { background: linear-gradient(135deg, #14532d, #16a34a); }
+    .paq-visual.cat-europa { background: linear-gradient(135deg, #3b0764, #7c3aed); }
+
+    .paq-badge-ja { position: absolute; top: 10px; left: 10px; z-index: 2; background: var(--naranja); color: white; font-size: .65rem; font-weight: 700; padding: 3px 9px; border-radius: 50px; }
+    .paq-badge-lugares { position: absolute; top: 10px; right: 10px; z-index: 2; background: rgba(0,0,0,.6); color: white; font-size: .65rem; font-weight: 600; padding: 3px 9px; border-radius: 50px; }
+    .paq-badge-urgente { position: absolute; top: 8px; right: 8px; z-index: 2; background: #ef4444; color: white; font-size: .62rem; font-weight: 800; padding: 5px 10px; border-radius: 6px; text-transform: uppercase; letter-spacing: .04em; box-shadow: 0 2px 8px rgba(239,68,68,.55); animation: urgente-pulse 1.6s ease-in-out infinite; }
+    @keyframes urgente-pulse { 0%,100%{transform:scale(1);box-shadow:0 2px 8px rgba(239,68,68,.55)} 50%{transform:scale(1.06);box-shadow:0 4px 16px rgba(239,68,68,.75)} }
+
+    .paq-body { padding: 16px 16px 12px; flex: 1; display: flex; flex-direction: column; }
+    .paq-cat { font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--teal); margin-bottom: 4px; }
+    .paq-nombre { font-size: .98rem; font-weight: 700; color: var(--texto); line-height: 1.3; margin-bottom: 8px; }
+    .paq-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .paq-chip { display: flex; align-items: center; gap: 4px; background: var(--fondo); color: var(--texto-s); font-size: .72rem; padding: 3px 9px; border-radius: 50px; }
+    .paq-descripcion { font-size: .8rem; color: var(--texto-s); line-height: 1.55; margin-bottom: 10px; }
+    .paq-spacer { flex: 1; }
+
+    .paq-servicios { margin-bottom: 6px; }
+    .paq-servicios-titulo { font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--teal); margin-bottom: 5px; }
+    .paq-servicios ul { list-style: none; display: flex; flex-direction: column; gap: 3px; }
+    .paq-servicios ul li { font-size: .78rem; color: var(--texto-s); display: flex; align-items: flex-start; gap: 6px; }
+    .paq-servicios ul li::before { content: '✓'; color: #22c55e; font-weight: 700; flex-shrink: 0; font-size: .75rem; margin-top: 1px; }
+    .paq-servicios ul li.servicio-extra { display: none; }
+    .paq-card.expandida .paq-servicios ul li.servicio-extra { display: flex; }
+
+    .btn-ver-mas { display: none; background: none; border: none; padding: 4px 0 8px; color: var(--teal); font-family: 'Poppins', sans-serif; font-size: .76rem; font-weight: 600; cursor: pointer; }
+    .btn-ver-mas:hover { text-decoration: underline; }
+    .btn-ver-mas.visible { display: block; }
+
+    .paq-footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--borde); padding-top: 10px; gap: 10px; }
+    .paq-precio-desde { font-size: .67rem; color: var(--texto-s); font-weight: 500; }
+    .paq-precio-valor { font-size: 1.15rem; font-weight: 800; color: var(--teal); line-height: 1.1; }
+    .paq-precio-moneda { font-size: .68rem; color: var(--texto-s); }
+    .btn-consultar { display: flex; align-items: center; gap: 6px; background: #25D366; color: white; font-family: 'Poppins', sans-serif; font-size: .78rem; font-weight: 700; padding: 9px 13px; border-radius: 8px; border: none; cursor: pointer; white-space: nowrap; transition: background var(--trans); }
+    .btn-consultar:hover { background: #1eb857; }
+
+    /* CÓMO FUNCIONA */
+    .como-section { max-width: 1160px; margin: 0 auto; padding: 48px 24px; }
+    .como-titulo { text-align: center; font-size: 1.45rem; font-weight: 700; margin-bottom: 6px; }
+    .como-sub { text-align: center; color: var(--texto-s); margin-bottom: 32px; font-size: .92rem; }
+    .como-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .como-card { text-align: center; padding: 20px 14px; }
+    .como-ico { width: 56px; height: 56px; border-radius: 50%; background: var(--teal-claro); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 12px; }
+    .como-card h4 { font-size: .92rem; font-weight: 700; margin-bottom: 5px; }
+    .como-card p { font-size: .8rem; color: var(--texto-s); line-height: 1.5; }
+
+    /* CONTACTO */
+    .contacto-section { background: var(--dark); padding: 48px 24px; }
+    .contacto-inner { max-width: 640px; margin: 0 auto; text-align: center; }
+    .contacto-inner h2 { font-size: 1.6rem; font-weight: 800; color: white; margin-bottom: 8px; }
+    .contacto-inner p { color: rgba(255,255,255,.65); margin-bottom: 24px; font-size: .93rem; }
+    .contacto-canales { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .canal-btn { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15); color: white; padding: 13px 20px; border-radius: 10px; font-size: .88rem; font-weight: 600; transition: background var(--trans); }
+    .canal-btn:hover { background: rgba(255,255,255,.13); }
+    .canal-btn.wa { background: rgba(37,211,102,.15); border-color: rgba(37,211,102,.35); }
+    .canal-btn.wa:hover { background: rgba(37,211,102,.25); }
+
+    /* FOOTER */
+    footer { background: #050d1a; padding: 22px 24px 28px; text-align: center; color: rgba(255,255,255,.3); font-size: .8rem; }
+    footer img { height: 34px; margin: 0 auto 8px; }
+    .footer-panel {
+      display: inline-flex; align-items: center; gap: 8px; margin-top: 14px;
+      padding: 10px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,.2);
+      color: rgba(255,255,255,.75); font-size: .82rem; font-weight: 600;
+      transition: background .2s, color .2s;
+    }
+    .footer-panel:hover { background: rgba(14,116,144,.35); color: white; }
+
+    /* WA FLOAT */
+    .wa-float { position: fixed; bottom: 24px; right: 24px; z-index: 999; width: 54px; height: 54px; border-radius: 50%; background: #25D366; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(37,211,102,.45); transition: transform var(--trans); }
+    .wa-float:hover { transform: scale(1.1); }
+    .wa-float svg { width: 26px; height: 26px; fill: white; }
+
+    /* SIN RESULTADOS */
+    .sin-resultados { text-align: center; padding: 60px 24px; color: var(--texto-s); display: none; }
+    .sin-resultados.visible { display: block; }
+
+    /* RESPONSIVE */
+    @media (max-width: 960px) { .paquetes-grid { grid-template-columns: repeat(2, 1fr); } .como-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) { .nav-links, .nav-wa { display: none; } .nav-hamburger { display: flex; } .paquetes-grid { grid-template-columns: 1fr; } .como-grid { grid-template-columns: 1fr 1fr; } }
+
+    .fade { opacity: 0; transform: translateY(18px); transition: opacity .5s ease, transform .5s ease; }
+    .fade.visible { opacity: 1; transform: none; }
+
+    /* AGOTADO */
+    .paq-agotado-overlay { position: absolute; inset: 0; z-index: 4; background: rgba(185,28,28,.82); display: flex; align-items: center; justify-content: center; }
+    .paq-agotado-texto { color: #fff; font-size: 2rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; text-shadow: 0 2px 10px rgba(0,0,0,.45); }
+    .paq-card.agotado { opacity: .82; }
+    .paq-card.agotado .btn-consultar { background: #6b7280; cursor: default; pointer-events: none; }
+
+    /* COMPARTIR */
+    .paq-share { margin: 10px 0 4px; padding-top: 10px; border-top: 1px dashed var(--borde); }
+    .paq-share-label { display: block; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--texto-s); margin-bottom: 6px; }
+    .paq-share-btns { display: flex; gap: 6px; }
+    .btn-share { width: 34px; height: 34px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; transition: transform .15s; }
+    .btn-share:hover { transform: translateY(-2px); }
+    .btn-share-wa { background: #25D366; }
+    .btn-share-fb { background: #1877F2; }
+    .btn-share-ig { background: linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888); }
+    .btn-share-copy { background: #64748b; }
+    .btn-share-flyer { background: #0e7490; text-decoration: none; }
+    .paq-nombre-link { color: inherit; }
+    .paq-nombre-link:hover { color: var(--teal); }
+    .share-toast { position: fixed; bottom: 90px; right: 24px; background: var(--dark); color: white; padding: 10px 18px; border-radius: 8px; font-size: .82rem; opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 998; max-width: 280px; }
+    .share-toast.show { opacity: 1; }
+
+    /* VACACIONES DE INVIERNO */
+    .paq-badge-invierno { position: absolute; bottom: 10px; left: 10px; z-index: 2; background: linear-gradient(135deg, #0369a1, #0ea5e9); color: white; font-size: .68rem; font-weight: 700; padding: 4px 10px; border-radius: 50px; letter-spacing: .03em; box-shadow: 0 2px 8px rgba(3,105,161,.4); }
+  </style>
+</head>
+<body>
+
+{% load static %}
+
+<nav class="navbar">
+  <img src="{% static 'img/logo-olala.png' %}" alt="Olalá Viajes" style="height:44px;width:auto;">
+  <ul class="nav-links">
+    <li><a href="#paquetes">Paquetes</a></li>
+    <li><a href="#como">¿Cómo funciona?</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+  </ul>
+  <a href="https://wa.me/{{ agencia_whatsapp }}?text=Hola!%20Quiero%20consultar%20sobre%20un%20paquete%20de%20Olala%20Viajes." target="_blank" class="nav-wa">
+    <svg width="15" height="15" viewBox="0 0 32 32" fill="white"><path d="M16 2C8.268 2 2 8.268 2 16c0 2.493.651 4.835 1.787 6.865L2 30l7.353-1.768A13.94 13.94 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm6.29 19.383c-.344-.172-2.036-1.004-2.352-1.118-.316-.115-.546-.172-.775.172-.229.344-.888 1.118-1.089 1.347-.2.23-.4.258-.745.086-.344-.172-1.453-.536-2.768-1.708-1.023-.913-1.713-2.04-1.913-2.384-.2-.344-.021-.53.15-.701.155-.154.344-.402.516-.603.172-.2.229-.344.344-.573.115-.229.057-.43-.029-.602-.086-.172-.775-1.869-1.062-2.56-.28-.672-.564-.58-.775-.591l-.66-.011c-.229 0-.602.086-.917.43-.315.344-1.204 1.176-1.204 2.867s1.233 3.327 1.405 3.556c.172.23 2.427 3.706 5.88 5.196.823.355 1.465.567 1.965.726.826.263 1.578.226 2.172.137.663-.099 2.036-.832 2.323-1.635.287-.803.287-1.49.2-1.634-.086-.143-.315-.23-.66-.402z"/></svg>
+    Consultar
+  </a>
+  <button class="nav-hamburger" id="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></button>
+</nav>
+
+<div class="mobile-menu" id="mobile-menu">
+  <a href="#paquetes" onclick="toggleMenu()">Paquetes</a>
+  <a href="#como" onclick="toggleMenu()">¿Cómo funciona?</a>
+  <a href="#contacto" onclick="toggleMenu()">Contacto</a>
+  <a href="https://wa.me/{{ agencia_whatsapp }}" target="_blank" onclick="toggleMenu()" style="color:#4ade80">WhatsApp</a>
+</div>
+
+<section class="hero">
+  <div class="hero-inner">
+    <span class="hero-badge">Posadas · Jardín América · Misiones</span>
+    <h1>Tu próximo viaje, a un <span>mensaje de distancia</span></h1>
+    <p>Paquetes turísticos a destinos increíbles con salidas desde Posadas y Jardín América. Consultanos, confirmamos disponibilidad y te acompañamos en cada paso.</p>
+    <div class="hero-btns">
+      <a href="#paquetes" class="btn-naranja">Ver paquetes disponibles</a>
+      <a href="https://wa.me/{{ agencia_whatsapp }}?text=Hola!%20Quiero%20consultar%20sobre%20los%20paquetes%20disponibles." target="_blank" class="btn-ghost-w">Escribinos por WhatsApp</a>
+    </div>
+  </div>
+</section>
+
+<div class="stats-band">
+  <div class="stats-inner">
+    <div class="stat-item"><div class="stat-num">{{ salidas|length }}</div><div class="stat-lbl">Salidas programadas</div></div>
+    <div class="stat-item"><div class="stat-num">4</div><div class="stat-lbl">Destinos internacionales</div></div>
+    <div class="stat-item"><div class="stat-num">ARS · USD · BRL</div><div class="stat-lbl">Monedas disponibles</div></div>
+    <div class="stat-item"><div class="stat-num">Abr — Nov</div><div class="stat-lbl">Temporada 2026</div></div>
+  </div>
+</div>
+
+<div class="filtros-wrap">
+  <div class="filtros">
+    <button class="filtro-btn active" onclick="filtrar('todos', this)">Todos</button>
+    <button class="filtro-btn" onclick="filtrar('termas', this)">♨️ Termas</button>
+    <button class="filtro-btn" onclick="filtrar('argentina', this)">🇦🇷 Argentina</button>
+    <button class="filtro-btn" onclick="filtrar('brasil', this)">🇧🇷 Brasil</button>
+    <button class="filtro-btn" onclick="filtrar('europa', this)">🌍 Europa & Mundo</button>
+  </div>
+</div>
+
+<section id="paquetes">
+  <div class="paquetes-section">
+    <div class="paquetes-header">
+      <div>
+        <div class="paquetes-titulo">Salidas programadas 2026</div>
+        <div class="paquetes-sub">Precios por persona · Consultanos disponibilidad antes de reservar</div>
+      </div>
+      <span id="resultado-count">{{ salidas|length }} paquete{{ salidas|length|pluralize:"s" }}</span>
+    </div>
+    <div class="paquetes-grid" id="grilla">
+
+      {% for s in salidas %}
+      <div class="paq-card fade{% if s.agotado %} agotado{% endif %}" data-cat="{{ s.cat }}">
+        <div class="paq-visual cat-{{ s.cat }}">
+          {% if s.imagen_src %}
+            <img src="{{ s.imagen_src }}" alt="{{ s.nombre_paquete }}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+            <span class="emoji-bg" style="display:none">{{ s.emoji }}</span>
+          {% else %}
+            <span class="emoji-bg">{{ s.emoji }}</span>
+          {% endif %}
+          {% if s.pasa_por_jardin_america %}<span class="paq-badge-ja">Pasa por Jardín América</span>{% endif %}
+          {% if s.vacaciones_invierno %}<span class="paq-badge-invierno">❄️ Vacaciones de Invierno</span>{% endif %}
+          {% if s.agotado %}
+            <div class="paq-agotado-overlay"><span class="paq-agotado-texto">¡AGOTADO!</span></div>
+          {% elif s.cupos %}
+            {% if s.cupos < 10 %}
+              <span class="paq-badge-urgente">¡Últimos {{ s.cupos }} lugares!</span>
+            {% else %}
+              <span class="paq-badge-lugares">{{ s.cupos }} lugares</span>
+            {% endif %}
+          {% endif %}
+        </div>
+        <div class="paq-body">
+          <div class="paq-cat">{{ s.cat_label }}</div>
+          <div class="paq-nombre">
+            <a href="{{ s.paquete_href }}" class="paq-nombre-link">{{ s.nombre_paquete }}</a>
+          </div>
+          <div class="paq-meta">
+            <span class="paq-chip">📅 {{ s.fecha_legible }}</span>
+            {% if s.lugar_salida %}<span class="paq-chip">📍 Sale de {{ s.lugar_salida }}</span>{% endif %}
+            {% if s.descripcion %}
+              {% with desc=s.descripcion|lower %}
+              {% if "noche" in desc or "día" in desc or "dia" in desc %}
+                <span class="paq-chip">🌙 {{ s.descripcion|truncatechars:25 }}</span>
+              {% endif %}
+              {% endwith %}
+            {% endif %}
+          </div>
+          {% if s.descripcion %}
+          <div class="paq-descripcion">{{ s.descripcion }}</div>
+          {% endif %}
+          {% if s.servicios_incluidos %}
+          <div class="paq-servicios">
+            <div class="paq-servicios-titulo">Incluye</div>
+            <ul>
+              {% for linea in s.servicios_incluidos.splitlines %}
+                {% if linea.strip %}
+                <li{% if forloop.counter > 6 %} class="servicio-extra"{% endif %}>{{ linea.strip }}</li>
+                {% endif %}
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          <button class="btn-ver-mas" type="button">↓ Ver más</button>
+          {% include 'web_share_buttons.html' with salida=s %}
+          <div class="paq-spacer"></div>
+          <div class="paq-footer">
+            <div class="paq-precio">
+              <div class="paq-precio-desde">desde</div>
+              <div class="paq-precio-valor">
+                {% if s.moneda == "ARS" %}${% elif s.moneda == "USD" %}U$S{% else %}R${% endif %}
+                {{ s.precio|floatformat:0 }}
+              </div>
+              <div class="paq-precio-moneda">por persona · {{ s.moneda }}</div>
+            </div>
+            <button class="btn-consultar" onclick="consultar('{{ s.nombre_paquete }} — {{ s.fecha_salida|date:"j \d\e F Y" }}')">
+              <svg width="14" height="14" viewBox="0 0 32 32" fill="white"><path d="M16 2C8.268 2 2 8.268 2 16c0 2.493.651 4.835 1.787 6.865L2 30l7.353-1.768A13.94 13.94 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm6.29 19.383c-.344-.172-2.036-1.004-2.352-1.118-.316-.115-.546-.172-.775.172-.229.344-.888 1.118-1.089 1.347-.2.23-.4.258-.745.086-.344-.172-1.453-.536-2.768-1.708-1.023-.913-1.713-2.04-1.913-2.384-.2-.344-.021-.53.15-.701.155-.154.344-.402.516-.603.172-.2.229-.344.344-.573.115-.229.057-.43-.029-.602-.086-.172-.775-1.869-1.062-2.56-.28-.672-.564-.58-.775-.591l-.66-.011c-.229 0-.602.086-.917.43-.315.344-1.204 1.176-1.204 2.867s1.233 3.327 1.405 3.556c.172.23 2.427 3.706 5.88 5.196.823.355 1.465.567 1.965.726.826.263 1.578.226 2.172.137.663-.099 2.036-.832 2.323-1.635.287-.803.287-1.49.2-1.634-.086-.143-.315-.23-.66-.402z"/></svg>
+              Consultar
+            </button>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+    </div>
+    <div class="sin-resultados" id="sin-resultados">
+      <p style="font-size:2rem;margin-bottom:8px;">🔍</p>
+      <p>No hay paquetes en esta categoría en este momento.</p>
+    </div>
+  </div>
+</section>
+
+<section id="como" style="background: var(--blanco);">
+  <div class="como-section">
+    <h2 class="como-titulo">¿Cómo funciona?</h2>
+    <p class="como-sub">Simple y sin sorpresas. Te acompañamos desde el primer mensaje hasta que volvés.</p>
+    <div class="como-grid">
+      <div class="como-card fade"><div class="como-ico">🔍</div><h4>Elegís el paquete</h4><p>Explorás las salidas disponibles y encontrás la que se adapta a tus fechas y presupuesto.</p></div>
+      <div class="como-card fade"><div class="como-ico">💬</div><h4>Consultás por WhatsApp</h4><p>Hacés click en "Consultar" y nos escribís directo. Te respondemos rápido con toda la info.</p></div>
+      <div class="como-card fade"><div class="como-ico">✅</div><h4>Confirmamos disponibilidad</h4><p>Verificamos los lugares disponibles y te confirmamos precio actualizado e incluidos antes de que pagues nada.</p></div>
+      <div class="como-card fade"><div class="como-ico">✈️</div><h4>¡A viajar!</h4><p>Coordinamos el pago y todos los detalles para que tu viaje sea perfecto de principio a fin.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="contacto" class="contacto-section">
+  <div class="contacto-inner">
+    <h2>¿Tenés alguna consulta?</h2>
+    <p>Escribinos por WhatsApp o email. Estamos en Jardín América, Misiones.</p>
+    <div class="contacto-canales">
+      <a href="https://wa.me/{{ agencia_whatsapp }}?text=Hola!%20Quiero%20consultar%20sobre%20los%20paquetes%20de%20Olala%20Viajes." target="_blank" class="canal-btn wa">
+        <svg width="18" height="18" viewBox="0 0 32 32" fill="#25D366"><path d="M16 2C8.268 2 2 8.268 2 16c0 2.493.651 4.835 1.787 6.865L2 30l7.353-1.768A13.94 13.94 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm6.29 19.383c-.344-.172-2.036-1.004-2.352-1.118-.316-.115-.546-.172-.775.172-.229.344-.888 1.118-1.089 1.347-.2.23-.4.258-.745.086-.344-.172-1.453-.536-2.768-1.708-1.023-.913-1.713-2.04-1.913-2.384-.2-.344-.021-.53.15-.701.155-.154.344-.402.516-.603.172-.2.229-.344.344-.573.115-.229.057-.43-.029-.602-.086-.172-.775-1.869-1.062-2.56-.28-.672-.564-.58-.775-.591l-.66-.011c-.229 0-.602.086-.917.43-.315.344-1.204 1.176-1.204 2.867s1.233 3.327 1.405 3.556c.172.23 2.427 3.706 5.88 5.196.823.355 1.465.567 1.965.726.826.263 1.578.226 2.172.137.663-.099 2.036-.832 2.323-1.635.287-.803.287-1.49.2-1.634-.086-.143-.315-.23-.66-.402z"/></svg>
+        {{ agencia_telefono }}
+      </a>
+      <a href="mailto:{{ agencia_email }}" class="canal-btn">📧 {{ agencia_email }}</a>
+    </div>
+  </div>
+</section>
+
+<div class="share-toast" id="share-toast">Enlace copiado</div>
+
+<a class="wa-float" href="https://wa.me/{{ agencia_whatsapp }}?text=Hola!%20Quiero%20consultar%20sobre%20los%20paquetes%20de%20Olala%20Viajes." target="_blank">
+  <svg viewBox="0 0 32 32"><path d="M16 2C8.268 2 2 8.268 2 16c0 2.493.651 4.835 1.787 6.865L2 30l7.353-1.768A13.94 13.94 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm6.29 19.383c-.344-.172-2.036-1.004-2.352-1.118-.316-.115-.546-.172-.775.172-.229.344-.888 1.118-1.089 1.347-.2.23-.4.258-.745.086-.344-.172-1.453-.536-2.768-1.708-1.023-.913-1.713-2.04-1.913-2.384-.2-.344-.021-.53.15-.701.155-.154.344-.402.516-.603.172-.2.229-.344.344-.573.115-.229.057-.43-.029-.602-.086-.172-.775-1.869-1.062-2.56-.28-.672-.564-.58-.775-.591l-.66-.011c-.229 0-.602.086-.917.43-.315.344-1.204 1.176-1.204 2.867s1.233 3.327 1.405 3.556c.172.23 2.427 3.706 5.88 5.196.823.355 1.465.567 1.965.726.826.263 1.578.226 2.172.137.663-.099 2.036-.832 2.323-1.635.287-.803.287-1.49.2-1.634-.086-.143-.315-.23-.66-.402z"/></svg>
+</a>
+
+<footer>
+  <p style="font-size:1.3rem;font-weight:800;color:white;letter-spacing:1px;margin-bottom:6px;">Olala<span style="color:var(--naranja)">!</span> Viajes</p>
+  <p>© 2026 Olala! Viajes · {{ agencia_direccion }}</p>
+  <p style="margin-top:4px;">Leg. Nº{{ agencia_leg }} · Disp. Nº{{ agencia_disp }}</p>
+  <a href="{{ panel_url }}" class="footer-panel" title="Panel de gestión Olalá Viajes">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a5 5 0 00-5 5v2H6a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V11a2 2 0 00-2-2h-1V7a5 5 0 00-5-5zm0 2a3 3 0 013 3v2H9V7a3 3 0 013-3z"/></svg>
+    Acceso agencia (panel)
+  </a>
+</footer>
+
+<script>
+  function toggleMenu() {
+    const m = document.getElementById('mobile-menu');
+    const b = document.getElementById('hamburger');
+    m.classList.toggle('open');
+    b.classList.toggle('open');
+    document.body.style.overflow = m.classList.contains('open') ? 'hidden' : '';
+  }
+  function filtrar(cat, btn) {
+    document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const cards = document.querySelectorAll('.paq-card');
+    let visible = 0;
+    cards.forEach(c => {
+      const mostrar = cat === 'todos' || c.dataset.cat === cat;
+      c.classList.toggle('oculto', !mostrar);
+      if (mostrar) visible++;
+    });
+    document.getElementById('resultado-count').textContent = visible + ' paquete' + (visible !== 1 ? 's' : '');
+    document.getElementById('sin-resultados').classList.toggle('visible', visible === 0);
+  }
+  const AGENCIA_WHATSAPP = '{{ agencia_whatsapp }}';
+
+  function getShareDataFromBox(box) {
+    const el = document.getElementById('share-payload-' + box.dataset.shareId);
+    return el ? JSON.parse(el.textContent) : null;
+  }
+
+  function showShareToast(msg) {
+    const t = document.getElementById('share-toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  function compartirWhatsApp(data) {
+    window.open('https://wa.me/' + AGENCIA_WHATSAPP + '?text=' + encodeURIComponent(data.text + '\n' + data.url), '_blank');
+  }
+
+  function compartirFacebook(data) {
+    window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(data.url), '_blank', 'width=600,height=500');
+  }
+
+  async function compartirInstagram(data) {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: data.title, text: data.text, url: data.url });
+        return;
+      } catch (e) { if (e.name === 'AbortError') return; }
+    }
+    try {
+      await navigator.clipboard.writeText(data.url);
+      showShareToast('Enlace copiado. Pegalo en Instagram.');
+    } catch (e) {
+      prompt('Copiá este enlace para Instagram:', data.url);
+    }
+  }
+
+  async function copiarEnlaceShare(data) {
+    try {
+      await navigator.clipboard.writeText(data.url);
+      showShareToast('Enlace del paquete copiado');
+    } catch (e) {
+      prompt('Copiá este enlace:', data.url);
+    }
+  }
+
+  document.querySelectorAll('.paq-share').forEach(function(box) {
+    box.querySelector('.btn-share-wa')?.addEventListener('click', function() {
+      const d = getShareDataFromBox(box);
+      if (d) compartirWhatsApp(d);
+    });
+    box.querySelector('.btn-share-fb')?.addEventListener('click', function() {
+      const d = getShareDataFromBox(box);
+      if (d) compartirFacebook(d);
+    });
+    box.querySelector('.btn-share-ig')?.addEventListener('click', function() {
+      const d = getShareDataFromBox(box);
+      if (d) compartirInstagram(d);
+    });
+    box.querySelector('.btn-share-copy')?.addEventListener('click', function() {
+      const d = getShareDataFromBox(box);
+      if (d) copiarEnlaceShare(d);
+    });
+  });
+
+  function consultar(paquete) {
+    const msg = encodeURIComponent('Hola! Quiero consultar sobre el paquete:\n*' + paquete + '*\n\n¿Tiene disponibilidad?');
+    window.open('https://wa.me/' + AGENCIA_WHATSAPP + '?text=' + msg, '_blank');
+  }
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.fade').forEach(el => obs.observe(el));
+
+  // Ver más / Ver menos — solo servicios que superen 6 ítems
+  document.querySelectorAll('.paq-card').forEach(function(card) {
+    var extras = card.querySelectorAll('.servicio-extra');
+    var btn    = card.querySelector('.btn-ver-mas');
+    if (!btn || extras.length === 0) return;
+    btn.classList.add('visible');
+    btn.addEventListener('click', function() {
+      var open = card.classList.toggle('expandida');
+      btn.textContent = open ? '↑ Ver menos' : '↓ Ver más';
+    });
+  });
+</script>
+</body>
+</html>

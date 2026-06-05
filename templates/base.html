@@ -65,6 +65,11 @@
       <i class="fas fa-bell"></i> {{ alertas_salidas }} salida{% if alertas_salidas != 1 %}s{% endif %} próxima{% if alertas_salidas != 1 %}s{% endif %}
     </a>
     {% endif %}
+    {% if alertas_saldos > 0 %}
+    <a href="{% url 'reporte_saldos' %}" class="alert-badge">
+      <i class="fas fa-dollar-sign"></i> {{ alertas_saldos }} con saldo pendiente
+    </a>
+    {% endif %}
   </div>
   {% endif %}
 </div>
@@ -74,8 +79,15 @@
   <div class="topbar">
     <button class="btn-menu" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
     <div class="topbar-title">{% block topbar_title %}{% endblock %}</div>
-    <div class="topbar-right">
-      <span class="text-muted small">Olalá Viajes</span>
+    <div class="topbar-right d-flex align-items-center gap-3">
+      {% if user.is_authenticated %}
+      <span class="text-muted small">{{ user.get_username }}</span>
+      <form method="post" action="{% url 'logout' %}" class="d-inline mb-0">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-outline-secondary">Salir</button>
+      </form>
+      {% endif %}
+      <a href="{% url 'web_publica' %}" class="text-muted small" target="_blank" title="Catálogo público"><i class="fas fa-globe"></i></a>
     </div>
   </div>
 

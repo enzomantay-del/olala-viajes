@@ -1,20 +1,38 @@
+from decimal import Decimal
+
+from django.db.models import Sum, F, DecimalField
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from datetime import timedelta
+
 from .models import Reserva
 
+
 def alertas_globales(request):
+    if not request.user.is_authenticated:
+        return {'alertas_salidas': 0, 'alertas_saldos': 0}
+
     hoy = timezone.now().date()
     proximos_dias = hoy + timedelta(days=7)
 
     salidas_proximas = Reserva.objects.filter(
         fecha_salida__gte=hoy,
         fecha_salida__lte=proximos_dias,
-        estado__in=['PENDIENTE', 'CONFIRMADA']
+        estado__in=['PENDIENTE', 'CONFIRMADA'],
     ).count()
 
-    saldos_pendientes = Reserva.objects.filter(
-        estado__in=['PENDIENTE', 'CONFIRMADA', 'EN_CURSO']
-    ).count()
+    saldos_pendientes = (
+        Reserva.objects.filter(estado__in=['PENDIENTE', 'CONFIRMADA', 'EN_CURSO'])
+        .annotate(
+            total_cobrado=Coalesce(
+                Sum('cobros__monto'),
+                Decimal('0'),
+                output_field=DecimalField(max_digits=12, decimal_places=2),
+            )
+        )
+        .filter(precio_venta__gt=F('total_cobrado'))
+        .count()
+    )
 
     return {
         'alertas_salidas': salidas_proximas,

@@ -1,12 +1,27 @@
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'olala-viajes-clave-secreta-2024-cambiar-si-se-expone'
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'olala-viajes-clave-secreta-2024-cambiar-si-se-expone',
+)
 
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '*']
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+    if h.strip()
+]
+
+_csrf_origins = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '')
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_origins.split(',') if o.strip()]
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -20,6 +35,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -49,14 +65,24 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'olala.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+_db_url = os.environ.get('DATABASE_URL')
+if _db_url:
+    import dj_database_url
+    DATABASES = {'default': dj_database_url.config(default=_db_url, conn_max_age=600)}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
 
-AUTH_PASSWORD_VALIDATORS = []
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
 
 LANGUAGE_CODE = 'es-ar'
 TIME_ZONE = 'America/Argentina/Buenos_Aires'
@@ -66,15 +92,39 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
+    },
+}
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/accounts/login/'
+
+# Publicar web: deploy a Firebase solo si OLALA_FIREBASE_DEPLOY=True
+OLALA_FIREBASE_DEPLOY = os.environ.get('OLALA_FIREBASE_DEPLOY', 'False').lower() in ('1', 'true', 'yes')
+
 # Datos de la agencia
 AGENCIA_NOMBRE = 'Olalá Viajes'
-AGENCIA_LEG = '19028'
-AGENCIA_EMAIL = ''
-AGENCIA_TELEFONO = ''
-AGENCIA_DIRECCION = ''
+AGENCIA_LEG = '14923'
+AGENCIA_DISP = '1475/2011'
+AGENCIA_EMAIL = 'enzomantay@gmail.com'
+AGENCIA_TELEFONO = '+54 9 3743 483429'
+AGENCIA_WHATSAPP = '5493743483429'
+AGENCIA_DIRECCION = 'Jardín América, Misiones, Argentina'
+
+# URL pública del sitio estático (Open Graph y enlaces para compartir)
+PUBLIC_WEB_BASE_URL = os.environ.get('PUBLIC_WEB_BASE_URL', 'https://olala-viajes.web.app').rstrip('/')
+
+# URL del panel de gestión (login). Obligatoria en el HTML estático de Firebase.
+# Ejemplo en producción: https://olala-viajes.onrender.com/accounts/login/
+PANEL_PUBLIC_URL = os.environ.get('PANEL_PUBLIC_URL', '').rstrip('/')

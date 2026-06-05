@@ -372,7 +372,7 @@ def generar_salidas_pdf(salidas, filtros=None):
     cell_bold = ParagraphStyle('CB', fontSize=8, textColor=NEGRO, fontName='Helvetica-Bold', leading=10)
     cell_muted = ParagraphStyle('CM', fontSize=7, textColor=GRIS, fontName='Helvetica', leading=9)
 
-    data = [['Paquete', 'Operadora', 'Fecha salida', 'Días', 'Lugar de salida', 'Jardín Amér.', 'Precio', 'Cupos']]
+    data = [['Paquete', 'Operadora', 'Fecha salida', 'Días', 'Lugar de salida', 'Jardín Amér.', 'Precio', 'Lugares']]
 
     hoy = date.today()
     for s in salidas:
