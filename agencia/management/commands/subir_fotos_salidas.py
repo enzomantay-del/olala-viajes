@@ -30,7 +30,12 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        carpeta = Path(options['carpeta'] or (Path(settings.MEDIA_ROOT) / 'salidas'))
+        if options['carpeta']:
+            carpeta = Path(options['carpeta'])
+        else:
+            media = Path(settings.MEDIA_ROOT) / 'salidas'
+            seed = Path(settings.BASE_DIR) / 'seed_media' / 'salidas'
+            carpeta = media if media.is_dir() else seed
         if not carpeta.is_dir():
             self.stderr.write(self.style.ERROR(f'No existe la carpeta: {carpeta}'))
             return

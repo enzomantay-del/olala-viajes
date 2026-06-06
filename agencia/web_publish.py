@@ -47,8 +47,13 @@ def _copiar_fotos_a_export(salidas, dest_dir, base_url):
     dst_salidas = dest_dir / 'media' / 'salidas'
     dst_salidas.mkdir(parents=True, exist_ok=True)
 
-    src_salidas = Path(django_settings.MEDIA_ROOT) / 'salidas'
-    if src_salidas.exists():
+    carpetas_origen = [
+        Path(django_settings.BASE_DIR) / 'seed_media' / 'salidas',
+        Path(django_settings.MEDIA_ROOT) / 'salidas',
+    ]
+    for src_salidas in carpetas_origen:
+        if not src_salidas.exists():
+            continue
         for archivo in src_salidas.iterdir():
             if archivo.is_file():
                 dest = dst_salidas / archivo.name
@@ -156,7 +161,14 @@ def preparar_salida_web(salida, base_url, modo='django'):
         salida.paquete_href = f'paquete/{salida.pk}.html'
         if salida.foto:
             url_foto = salida.foto.url
-            if django_settings.USE_CLOUDINARY_MEDIA or _es_url_remota(url_foto):
+            if django_settings.USE_CLOUDINARY_MEDIA:
+                salida.imagen_src = (
+                    _normalizar_url_remota(url_foto)
+                    if _es_url_remota(url_foto)
+                    else f'media/salidas/{nombre_foto}'
+                )
+                salida.imagen_es_absoluta = _es_url_remota(url_foto)
+            elif _es_url_remota(url_foto):
                 salida.imagen_src = _normalizar_url_remota(url_foto)
                 salida.imagen_es_absoluta = True
             else:

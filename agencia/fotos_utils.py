@@ -1,4 +1,4 @@
-"""Diagnóstico de fotos de salidas (disco local vs nube)."""
+"""Diagnóstico de fotos de salidas."""
 
 from django.conf import settings
 
@@ -35,19 +35,29 @@ def resumen_fotos_salidas():
         'faltan_nombres': faltan_nombres[:5],
         'cloudinary': settings.USE_CLOUDINARY_MEDIA,
         'produccion': not settings.DEBUG,
+        'tiene_respaldo': (settings.BASE_DIR / 'seed_media' / 'salidas').is_dir(),
     }
 
 
 def puede_publicar_seguro():
+    """Sincroniza fotos automáticamente y solo bloquea si falta Cloudinary en producción."""
+    from .fotos_cloudinary import sincronizar_todas_las_fotos
+
     resumen = resumen_fotos_salidas()
     if resumen['produccion'] and not resumen['cloudinary']:
         return False, (
-            'En Render las fotos se borran del servidor. '
-            'Configurá CLOUDINARY_URL en Environment (ver FLUJO-SIMPLE.md).'
+            'Falta CLOUDINARY_URL en Render. Sin eso las fotos se pierden. '
+            'Agregala en Environment (cloudinary.com → API Keys).'
         )
+
+    if resumen['faltan'] > 0:
+        sincronizar_todas_las_fotos()
+        resumen = resumen_fotos_salidas()
+
     if resumen['faltan'] > 0:
         return False, (
-            f'Faltan {resumen["faltan"]} de {resumen["total"]} fotos en el almacenamiento. '
-            'Desde tu PC ejecutá restaurar-fotos.bat (con CLOUDINARY_URL y DATABASE_URL en .env).'
+            f'Aún faltan {resumen["faltan"]} fotos. '
+            'Hacé git push (incluye seed_media/) y esperá el redeploy de Render.'
         )
+
     return True, ''

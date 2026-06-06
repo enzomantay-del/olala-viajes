@@ -3,10 +3,12 @@
 
 def ejecutar_publicacion_web():
     from .firebase_deploy import deploy_olala_hosting
+    from .fotos_cloudinary import sincronizar_todas_las_fotos
     from .publish_status import finalizar_publicacion
     from .web_publish import generar_sitio_web_estatico
 
     try:
+        sincronizar_todas_las_fotos()
         _dest, num_salidas, num_flyers = generar_sitio_web_estatico(request=None)
         deploy_ok, deploy_msg, detalle = deploy_olala_hosting()
         if deploy_ok:

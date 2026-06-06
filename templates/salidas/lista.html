@@ -10,17 +10,15 @@
   Agregá <code>CLOUDINARY_URL</code> en Render → Environment (cuenta gratis en cloudinary.com).
 </div>
 {% elif estado_fotos and estado_fotos.faltan > 0 %}
-<div class="alert alert-danger mb-3" role="alert">
-  <i class="fas fa-exclamation-circle me-2"></i>
-  <strong>Faltan {{ estado_fotos.faltan }} foto{{ estado_fotos.faltan|pluralize }} en la nube</strong>
-  ({{ estado_fotos.ok }}/{{ estado_fotos.total }} OK).
-  Si publicás ahora, esas tarjetas saldrán sin imagen.
-  Desde tu PC: <code>restaurar-fotos.bat</code> con <code>CLOUDINARY_URL</code> y <code>DATABASE_URL</code> en <code>.env</code>.
+<div class="alert alert-warning mb-3" role="alert">
+  <i class="fas fa-exclamation-triangle me-2"></i>
+  Faltan {{ estado_fotos.faltan }} foto{{ estado_fotos.faltan|pluralize }} en la nube ({{ estado_fotos.ok }}/{{ estado_fotos.total }}).
+  Al publicar se intentará sincronizar automáticamente.
 </div>
-{% elif estado_fotos and estado_fotos.cloudinary and estado_fotos.faltan == 0 %}
+{% elif estado_fotos and estado_fotos.cloudinary %}
 <div class="alert alert-success mb-3 py-2" role="alert">
   <i class="fas fa-cloud me-2"></i>
-  Fotos en la nube: {{ estado_fotos.ok }}/{{ estado_fotos.total }} — podés publicar con seguridad.
+  Fotos en la nube: {{ estado_fotos.ok }}/{{ estado_fotos.total }} — listo para publicar.
 </div>
 {% endif %}
 
