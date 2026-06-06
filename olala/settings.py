@@ -23,11 +23,9 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-_USE_CLOUDINARY = bool(os.environ.get('CLOUDINARY_URL'))
-if _USE_CLOUDINARY:
-    import cloudinary
+from agencia.cloudinary_config import cloudinary_disponible
 
-    cloudinary.config()
+_USE_CLOUDINARY = cloudinary_disponible()
 
 INSTALLED_APPS = [
     'django.contrib.admin',

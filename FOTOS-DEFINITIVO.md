@@ -18,7 +18,13 @@ git commit -m "Solución definitiva fotos: seed_media + Cloudinary automático"
 git push
 ```
 
-Esperá 3–5 min el deploy en Render. Verificá que `CLOUDINARY_URL` esté en Environment.
+Esperá 3–5 min el deploy en Render. Verificá `CLOUDINARY_URL` en Render → Environment. Debe ser la URL **completa** de Cloudinary:
+
+```
+cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+```
+
+(Copiála desde Cloudinary → Dashboard → API Keys → el ícono de copiar "Environment variable". **Sin espacios** al pegar.)
 
 ## Después de eso
 

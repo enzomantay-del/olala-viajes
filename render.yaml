@@ -6,7 +6,7 @@ services:
     name: olala-viajes
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt && npm install && python manage.py collectstatic --noinput && python manage.py migrate --noinput && python manage.py asegurar_fotos_cloudinary
+    buildCommand: pip install -r requirements.txt && npm install && python manage.py collectstatic --noinput && python manage.py migrate --noinput
     startCommand: gunicorn olala.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
