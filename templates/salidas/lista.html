@@ -3,6 +3,27 @@
 {% block topbar_title %}Salidas de Operadoras{% endblock %}
 {% block content %}
 
+{% if estado_fotos and estado_fotos.produccion and not estado_fotos.cloudinary %}
+<div class="alert alert-danger mb-3" role="alert">
+  <i class="fas fa-exclamation-circle me-2"></i>
+  <strong>Fotos en riesgo:</strong> Render no guarda las imágenes en el servidor.
+  Agregá <code>CLOUDINARY_URL</code> en Render → Environment (cuenta gratis en cloudinary.com).
+</div>
+{% elif estado_fotos and estado_fotos.faltan > 0 %}
+<div class="alert alert-danger mb-3" role="alert">
+  <i class="fas fa-exclamation-circle me-2"></i>
+  <strong>Faltan {{ estado_fotos.faltan }} foto{{ estado_fotos.faltan|pluralize }} en la nube</strong>
+  ({{ estado_fotos.ok }}/{{ estado_fotos.total }} OK).
+  Si publicás ahora, esas tarjetas saldrán sin imagen.
+  Desde tu PC: <code>restaurar-fotos.bat</code> con <code>CLOUDINARY_URL</code> y <code>DATABASE_URL</code> en <code>.env</code>.
+</div>
+{% elif estado_fotos and estado_fotos.cloudinary and estado_fotos.faltan == 0 %}
+<div class="alert alert-success mb-3 py-2" role="alert">
+  <i class="fas fa-cloud me-2"></i>
+  Fotos en la nube: {{ estado_fotos.ok }}/{{ estado_fotos.total }} — podés publicar con seguridad.
+</div>
+{% endif %}
+
 {% if estado_publicacion %}
 <div class="alert alert-{% if estado_publicacion.state == 'running' %}info{% elif estado_publicacion.state == 'ok' %}success{% else %}warning{% endif %} mb-3" role="alert">
   {% if estado_publicacion.state == 'running' %}
@@ -14,9 +35,13 @@
   {% endif %}
   <strong>Publicación web:</strong> {{ estado_publicacion.message }}
   {% if estado_publicacion.finished %}<span class="text-muted small ms-2">({{ estado_publicacion.finished }})</span>{% endif %}
+  {% if estado_publicacion.state == 'running' %}
+    <a href="{% url 'reiniciar_publicacion_web' %}" class="btn btn-sm btn-outline-secondary ms-2"
+       onclick="return confirm('¿Cancelar publicación colgada y reiniciar?')">Reiniciar</a>
+  {% endif %}
 </div>
 {% if estado_publicacion.state == 'running' %}
-<script>setTimeout(function(){ location.reload(); }, 20000);</script>
+<script>setTimeout(function(){ location.reload(); }, 15000);</script>
 {% endif %}
 {% endif %}
 

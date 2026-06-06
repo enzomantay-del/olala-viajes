@@ -58,7 +58,7 @@ def generar_og_catalogo(dest_dir):
     fuente_titulo = _cargar_fuente(34, negrita=True)
     fuente_sub = _cargar_fuente(24, negrita=False)
     linea1 = 'Paquetes turísticos 2026'
-    linea2 = 'Posadas · Jardín América · Misiones'
+    linea2 = 'Catálogo de paquetes · Temporada 2026'
     w1 = _ancho_texto(draw, linea1, fuente_titulo)
     w2 = _ancho_texto(draw, linea2, fuente_sub)
     draw.text(((OG_ANCHO - w1) / 2, logo_y), linea1, font=fuente_titulo, fill=(255, 255, 255))

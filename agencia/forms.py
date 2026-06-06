@@ -154,11 +154,19 @@ class VoucherForm(forms.ModelForm):
 
 
 class SalidaForm(forms.ModelForm):
+    categorias = forms.MultipleChoiceField(
+        label='Categorías en la web',
+        choices=[],
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'form-check-input'}),
+        required=True,
+        help_text='Elegí una o más. El paquete aparecerá en cada filtro seleccionado.',
+    )
+
     class Meta:
         model = Salida
         fields = [
             'operadora', 'nombre_paquete', 'fecha_salida', 'lugar_salida',
-            'pasa_por_jardin_america', 'descripcion', 'servicios_incluidos',
+            'pasa_por_jardin_america', 'categorias', 'descripcion', 'servicios_incluidos',
             'foto', 'precio', 'moneda', 'cupos', 'vacaciones_invierno', 'agotado', 'notas'
         ]
         widgets = {
@@ -177,3 +185,17 @@ class SalidaForm(forms.ModelForm):
             'agotado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'notas': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
+
+    def __init__(self, *args, **kwargs):
+        from .salidas_utils import CATEGORIA_CHOICES
+
+        super().__init__(*args, **kwargs)
+        self.fields['categorias'].choices = CATEGORIA_CHOICES
+        if self.instance.pk and self.instance.categorias:
+            self.initial['categorias'] = self.instance.get_categorias_slugs()
+
+    def clean_categorias(self):
+        categorias = self.cleaned_data.get('categorias') or []
+        if not categorias:
+            raise forms.ValidationError('Elegí al menos una categoría.')
+        return categorias

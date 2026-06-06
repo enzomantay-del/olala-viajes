@@ -85,7 +85,7 @@
 
   <div class="detalle-hero">
     {% if salida.foto or salida.imagen_src %}
-      <img src="{% if es_estatico %}../{{ salida.imagen_src }}{% else %}{{ salida.imagen_src }}{% endif %}" alt="{{ salida.nombre_paquete }}">
+      <img src="{% if es_estatico %}{% if salida.imagen_es_absoluta %}{{ salida.imagen_src }}{% else %}../{{ salida.imagen_src }}{% endif %}{% else %}{{ salida.imagen_src }}{% endif %}" alt="{{ salida.nombre_paquete }}">
     {% else %}
       <span class="emoji-fallback">{{ salida.emoji }}</span>
     {% endif %}

@@ -195,10 +195,9 @@ def _dibujar_zona_foto(canvas, salida):
     foto_ok = False
     if salida.foto:
         try:
-            ruta = salida.foto.path
-            if os.path.isfile(ruta):
+            with salida.foto.open('rb') as archivo:
                 portada = ImageOps.fit(
-                    Image.open(ruta).convert('RGB'),
+                    Image.open(archivo).convert('RGB'),
                     (ANCHO, alto_foto),
                     method=Image.Resampling.LANCZOS,
                 )

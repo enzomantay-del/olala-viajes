@@ -23,6 +23,7 @@ MONEDAS = [
     ('BRL', 'Reales (BRL)'),
 ]
 
+
 FORMAS_PAGO = [
     ('EFECTIVO', 'Efectivo'),
     ('TRANSFERENCIA', 'Transferencia Bancaria'),
@@ -328,6 +329,12 @@ class Salida(models.Model):
     cupos = models.PositiveIntegerField('Lugares disponibles', null=True, blank=True)
     vacaciones_invierno = models.BooleanField('Vacaciones de invierno', default=False)
     agotado = models.BooleanField('Agotado', default=False)
+    categorias = models.JSONField(
+        'Categorías web',
+        default=list,
+        blank=True,
+        help_text='Una o más categorías para los filtros de la web pública.',
+    )
     notas = models.TextField('Notas internas', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -343,6 +350,14 @@ class Salida(models.Model):
         from django.utils import timezone
         hoy = timezone.now().date()
         return (self.fecha_salida - hoy).days
+
+    def get_categorias_slugs(self):
+        from .salidas_utils import CATEGORIAS_WEB
+
+        if not isinstance(self.categorias, list):
+            return []
+        validas = set(CATEGORIAS_WEB.keys())
+        return [c for c in self.categorias if c in validas]
 
 
 class Voucher(models.Model):

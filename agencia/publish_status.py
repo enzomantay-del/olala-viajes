@@ -1,7 +1,8 @@
-"""Estado de la publicación web (archivo compartido entre hilos y requests)."""
+"""Estado de la publicación web (archivo compartido entre procesos)."""
 
 import json
 import threading
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -9,6 +10,7 @@ from django.conf import settings
 
 _lock = threading.Lock()
 _running = False
+TIMEOUT_SEGUNDOS = 12 * 60
 
 
 def _status_path():
@@ -24,9 +26,24 @@ def leer_estado():
     if not path.exists():
         return None
     try:
-        return json.loads(path.read_text(encoding='utf-8'))
+        estado = json.loads(path.read_text(encoding='utf-8'))
     except (json.JSONDecodeError, OSError):
         return None
+    if estado.get('state') == 'running' and _publicacion_expirada(estado):
+        finalizar_publicacion(
+            False,
+            'La publicación anterior quedó colgada (timeout). Podés intentar de nuevo.',
+            '',
+        )
+        return leer_estado()
+    return estado
+
+
+def _publicacion_expirada(estado):
+    iniciado = estado.get('started_at')
+    if iniciado is None:
+        return False
+    return (time.time() - float(iniciado)) > TIMEOUT_SEGUNDOS
 
 
 def publicacion_en_curso():
@@ -46,6 +63,7 @@ def iniciar_publicacion():
                     'state': 'running',
                     'message': 'Generando sitio y subiendo a olala-viajes.web.app…',
                     'started': _ahora(),
+                    'started_at': time.time(),
                 },
                 ensure_ascii=False,
             ),
@@ -72,7 +90,15 @@ def finalizar_publicacion(ok, mensaje, detalle=''):
         )
 
 
+def reiniciar_publicacion():
+    """Limpia un estado colgado para poder publicar de nuevo."""
+    global _running
+    with _lock:
+        _running = False
+        path = _status_path()
+        if path.exists():
+            path.unlink(missing_ok=True)
+
+
 def limpiar_estado():
-    path = _status_path()
-    if path.exists():
-        path.unlink(missing_ok=True)
+    reiniciar_publicacion()

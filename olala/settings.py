@@ -23,12 +23,19 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
+_USE_CLOUDINARY = bool(os.environ.get('CLOUDINARY_URL'))
+if _USE_CLOUDINARY:
+    import cloudinary
+
+    cloudinary.config()
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    *(['cloudinary_storage', 'cloudinary'] if _USE_CLOUDINARY else []),
     'django.contrib.staticfiles',
     'agencia',
 ]
@@ -60,6 +67,7 @@ TEMPLATES = [
                 'agencia.context_processors.agencia_sitio',
                 'agencia.context_processors.alertas_globales',
                 'agencia.context_processors.estado_publicacion_web',
+                'agencia.context_processors.estado_fotos_salidas',
             ],
         },
     },
@@ -96,7 +104,11 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STORAGES = {
     'default': {
-        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'BACKEND': (
+            'cloudinary_storage.storage.MediaCloudinaryStorage'
+            if _USE_CLOUDINARY
+            else 'django.core.files.storage.FileSystemStorage'
+        ),
     },
     'staticfiles': {
         'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
@@ -105,6 +117,7 @@ STORAGES = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+USE_CLOUDINARY_MEDIA = _USE_CLOUDINARY
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

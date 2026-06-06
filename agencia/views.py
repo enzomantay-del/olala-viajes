@@ -790,31 +790,20 @@ window.location.href = "https://wa.me/?text=" + encodeURIComponent(msg);
     return HttpResponse(html)
 
 
-def _ejecutar_publicacion_web():
-    """Genera el sitio y lo sube a Firebase (corre en segundo plano)."""
-    from .firebase_deploy import deploy_olala_hosting
-    from .publish_status import finalizar_publicacion
-
-    try:
-        _dest, num_salidas, num_flyers = generar_sitio_web_estatico(request=None)
-        deploy_ok, deploy_msg, detalle = deploy_olala_hosting()
-        if deploy_ok:
-            finalizar_publicacion(
-                True,
-                f'Listo: {num_salidas} paquetes y {num_flyers} flyers en olala-viajes.web.app',
-                detalle,
-            )
-        else:
-            finalizar_publicacion(False, deploy_msg, detalle)
-    except Exception as exc:
-        finalizar_publicacion(False, f'Error inesperado: {exc}', '')
-
-
 def publicar_web(request):
-    """Inicia publicación en segundo plano (no bloquea el navegador)."""
-    import threading
+    """Inicia publicación en un proceso aparte (Gunicorn no corta el hilo)."""
+    import subprocess
+    import sys
 
+    from django.conf import settings
+
+    from .fotos_utils import puede_publicar_seguro
     from .publish_status import iniciar_publicacion, publicacion_en_curso
+
+    ok_fotos, msg_fotos = puede_publicar_seguro()
+    if not ok_fotos:
+        messages.error(request, msg_fotos)
+        return redirect('salidas_lista')
 
     if publicacion_en_curso():
         messages.warning(
@@ -827,12 +816,35 @@ def publicar_web(request):
         messages.warning(request, 'No se pudo iniciar la publicación. Intentá de nuevo.')
         return redirect('salidas_lista')
 
-    threading.Thread(target=_ejecutar_publicacion_web, daemon=True).start()
+    try:
+        subprocess.Popen(
+            [sys.executable, 'manage.py', 'publicar_sitio_web'],
+            cwd=str(settings.BASE_DIR),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except OSError as exc:
+        from .publish_status import reiniciar_publicacion
+
+        reiniciar_publicacion()
+        messages.error(request, f'No se pudo iniciar la publicación: {exc}')
+        return redirect('salidas_lista')
+
     messages.info(
         request,
-        'Publicación iniciada. En 1–2 minutos refrescá Salidas para ver si terminó. '
+        'Publicación iniciada. En 1–3 minutos refrescá Salidas para ver si terminó. '
         'La web pública será https://olala-viajes.web.app',
     )
+    return redirect('salidas_lista')
+
+
+def reiniciar_publicacion_web(request):
+    """Cancela un estado de publicación colgado."""
+    from .publish_status import reiniciar_publicacion
+
+    reiniciar_publicacion()
+    messages.success(request, 'Estado de publicación reiniciado. Podés publicar de nuevo.')
     return redirect('salidas_lista')
 
 

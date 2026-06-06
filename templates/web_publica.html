@@ -123,9 +123,11 @@
     .paq-visual.cat-termas { background: linear-gradient(135deg, #164e63, #0e7490); }
     .paq-visual.cat-argentina { background: linear-gradient(135deg, #1e3a5f, #2563eb); }
     .paq-visual.cat-brasil { background: linear-gradient(135deg, #14532d, #16a34a); }
-    .paq-visual.cat-europa { background: linear-gradient(135deg, #3b0764, #7c3aed); }
-    .paq-visual.cat-playa { background: linear-gradient(135deg, #0c4a6e, #38bdf8); }
+    .paq-visual.cat-playas { background: linear-gradient(135deg, #0c4a6e, #38bdf8); }
     .paq-visual.cat-caribe { background: linear-gradient(135deg, #9a3412, #fb923c); }
+    .paq-visual.cat-europa { background: linear-gradient(135deg, #3b0764, #7c3aed); }
+    .paq-visual.cat-mundo { background: linear-gradient(135deg, #1e1b4b, #6366f1); }
+    .paq-visual.cat-naturaleza { background: linear-gradient(135deg, #064e3b, #10b981); }
 
     .paq-badge-ja { position: absolute; top: 10px; left: 10px; z-index: 2; background: var(--naranja); color: white; font-size: .65rem; font-weight: 700; padding: 3px 9px; border-radius: 50px; }
     .paq-badge-lugares { position: absolute; top: 10px; right: 10px; z-index: 2; background: rgba(0,0,0,.6); color: white; font-size: .65rem; font-weight: 600; padding: 3px 9px; border-radius: 50px; }
@@ -260,7 +262,6 @@
 
 <section class="hero">
   <div class="hero-inner">
-    <span class="hero-badge">Posadas · Jardín América · Misiones</span>
     <h1>Tu próximo viaje, a un <span>mensaje de distancia</span></h1>
     <p>Paquetes turísticos a destinos increíbles con salidas desde Posadas y Jardín América. Consultanos, confirmamos disponibilidad y te acompañamos en cada paso.</p>
     <div class="hero-btns">
@@ -287,10 +288,12 @@
     <button class="filtro-btn active" onclick="filtrar('todos', this)">Todos</button>
     <button class="filtro-btn" onclick="filtrar('argentina', this)">🇦🇷 Argentina</button>
     <button class="filtro-btn" onclick="filtrar('brasil', this)">🇧🇷 Brasil</button>
-    <button class="filtro-btn" onclick="filtrar('playa', this)">🏖️ Playa</button>
-    <button class="filtro-btn" onclick="filtrar('caribe', this)">🏝️ Caribe</button>
     <button class="filtro-btn" onclick="filtrar('termas', this)">♨️ Termas</button>
-    <button class="filtro-btn" onclick="filtrar('europa', this)">🌍 Europa & Mundo</button>
+    <button class="filtro-btn" onclick="filtrar('playas', this)">🏖️ Playas</button>
+    <button class="filtro-btn" onclick="filtrar('caribe', this)">🏝️ Caribe</button>
+    <button class="filtro-btn" onclick="filtrar('europa', this)">🇪🇺 Europa</button>
+    <button class="filtro-btn" onclick="filtrar('mundo', this)">🌍 Mundo</button>
+    <button class="filtro-btn" onclick="filtrar('naturaleza', this)">🦭 Naturaleza</button>
   </div>
 </div>
 
@@ -306,7 +309,7 @@
     <div class="paquetes-grid" id="grilla">
 
       {% for s in salidas %}
-      <div class="paq-card fade{% if s.agotado %} agotado{% endif %}" data-cat="{{ s.cat }}">
+      <div class="paq-card fade{% if s.agotado %} agotado{% endif %}" data-cats="{{ s.cats|join:',' }}">
         <div class="paq-visual cat-{{ s.cat }}">
           {% if s.imagen_src %}
             <img src="{{ s.imagen_src }}" alt="{{ s.nombre_paquete }}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
@@ -444,7 +447,8 @@
     const cards = document.querySelectorAll('.paq-card');
     let visible = 0;
     cards.forEach(c => {
-      const mostrar = cat === 'todos' || c.dataset.cat === cat;
+      const cats = (c.dataset.cats || '').split(',').filter(Boolean);
+      const mostrar = cat === 'todos' || cats.includes(cat);
       c.classList.toggle('oculto', !mostrar);
       if (mostrar) visible++;
     });

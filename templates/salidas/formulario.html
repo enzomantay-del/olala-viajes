@@ -33,6 +33,20 @@
             {{ form.vacaciones_invierno }}
             <label class="form-check-label fw-semibold">Salida de vacaciones de invierno</label>
           </div>
+          <div class="col-12">
+            <label class="form-label">Categorías en la web * <small class="text-muted">(una o más — define en qué filtros aparece)</small></label>
+            {% if form.categorias.errors %}<div class="text-danger small mb-2">{{ form.categorias.errors }}</div>{% endif %}
+            <div class="row g-2">
+              {% for checkbox in form.categorias %}
+              <div class="col-md-4 col-sm-6">
+                <div class="form-check">
+                  {{ checkbox.tag }}
+                  <label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
         </div>
       </div>
 

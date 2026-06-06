@@ -84,7 +84,7 @@ def deploy_olala_hosting():
             cwd=str(_firebase_dir()),
             capture_output=True,
             text=True,
-            timeout=300,
+            timeout=600,
             env=_entorno_deploy(),
         )
     except FileNotFoundError:

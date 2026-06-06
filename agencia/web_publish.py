@@ -29,10 +29,64 @@ def _nombre_archivo_foto(salida):
     return None
 
 
+def _es_url_remota(url):
+    return url.startswith(('http://', 'https://', '//'))
+
+
+def _normalizar_url_remota(url):
+    if url.startswith('//'):
+        return f'https:{url}'
+    return url
+
+
+def _copiar_fotos_a_export(salidas, dest_dir, base_url):
+    """Copia fotos al sitio estático: disco local, Cloudinary o web pública anterior."""
+    import urllib.error
+    import urllib.request
+
+    dst_salidas = dest_dir / 'media' / 'salidas'
+    dst_salidas.mkdir(parents=True, exist_ok=True)
+
+    src_salidas = Path(django_settings.MEDIA_ROOT) / 'salidas'
+    if src_salidas.exists():
+        for archivo in src_salidas.iterdir():
+            if archivo.is_file():
+                dest = dst_salidas / archivo.name
+                if not dest.exists():
+                    shutil.copy2(archivo, dest)
+
+    for salida in salidas:
+        if not salida.foto:
+            continue
+        nombre = _nombre_archivo_foto(salida)
+        if not nombre:
+            continue
+        dest = dst_salidas / nombre
+        if dest.exists():
+            continue
+        try:
+            with salida.foto.open('rb') as f:
+                dest.write_bytes(f.read())
+            continue
+        except Exception:
+            pass
+        try:
+            url = f'{base_url.rstrip("/")}/media/salidas/{nombre}'
+            urllib.request.urlretrieve(url, dest)
+            if dest.stat().st_size == 0:
+                dest.unlink(missing_ok=True)
+        except (urllib.error.URLError, OSError, Exception):
+            dest.unlink(missing_ok=True)
+
+
 def url_imagen_absoluta(salida, base_url):
-    nombre = _nombre_archivo_foto(salida)
-    if nombre:
-        return f'{base_url.rstrip("/")}/media/salidas/{nombre}'
+    if salida.foto:
+        url = salida.foto.url
+        if url.startswith('http'):
+            return url
+        nombre = _nombre_archivo_foto(salida)
+        if nombre:
+            return f'{base_url.rstrip("/")}/media/salidas/{nombre}'
     return f'{base_url.rstrip("/")}/logo.png'
 
 
@@ -100,7 +154,17 @@ def preparar_salida_web(salida, base_url, modo='django'):
     salida.flyer_url_absoluta = f'{base_url.rstrip("/")}/flyers/{salida.pk}.jpg'
     if modo == 'static':
         salida.paquete_href = f'paquete/{salida.pk}.html'
-        salida.imagen_src = f'media/salidas/{nombre_foto}' if nombre_foto else 'logo.png'
+        if salida.foto:
+            url_foto = salida.foto.url
+            if django_settings.USE_CLOUDINARY_MEDIA or _es_url_remota(url_foto):
+                salida.imagen_src = _normalizar_url_remota(url_foto)
+                salida.imagen_es_absoluta = True
+            else:
+                salida.imagen_src = f'media/salidas/{nombre_foto}' if nombre_foto else 'logo.png'
+                salida.imagen_es_absoluta = False
+        else:
+            salida.imagen_src = 'logo.png'
+            salida.imagen_es_absoluta = False
         salida.flyer_href = f'flyers/{salida.pk}.jpg'
     else:
         salida.paquete_href = reverse('web_publica_paquete', kwargs={'pk': salida.pk})
@@ -226,13 +290,7 @@ def generar_sitio_web_estatico(request=None):
         html_p = _adaptar_html_paquete_estatico(html_p)
         (paquete_dir / f'{s.pk}.html').write_text(html_p, encoding='utf-8')
 
-    src_salidas = Path(django_settings.MEDIA_ROOT) / 'salidas'
-    dst_salidas = dest_dir / 'media' / 'salidas'
-    if src_salidas.exists():
-        dst_salidas.mkdir(parents=True, exist_ok=True)
-        for archivo in src_salidas.iterdir():
-            if archivo.is_file():
-                shutil.copy2(archivo, dst_salidas / archivo.name)
+    _copiar_fotos_a_export(salidas, dest_dir, base_url)
 
     img_dir = Path(django_settings.BASE_DIR) / 'static' / 'img'
     logo_src = img_dir / 'logo-blanco.png'

@@ -26,3 +26,6 @@ services:
       # Crear con: firebase.cmd login:ci  →  pegar token en Render (Environment)
       - key: FIREBASE_TOKEN
         sync: false
+      # Cloudinary (fotos que no se borran al reiniciar Render): cloudinary.com → API Keys
+      - key: CLOUDINARY_URL
+        sync: false

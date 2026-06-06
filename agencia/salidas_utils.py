@@ -3,64 +3,28 @@
 import re
 import unicodedata
 
-# Orden: la primera categoría que coincida gana (de más específica a más general).
-CATEGORIAS = [
-    (
-        'caribe',
-        [
-            'punta cana', 'mar caribe', 'caribe', 'bavaro', 'bávaro', 'republica dominicana',
-            'república dominicana', 'dominicana', 'cancun', 'cancún', 'riviera maya',
-            'playa del carmen', 'aruba', 'curazao', 'curacao', 'bahamas', 'jamaica',
-        ],
-        '🏝️',
-        'Caribe',
-    ),
-    (
-        'europa',
-        [
-            'europa', 'turquia', 'turquía', 'grecia', 'atenas', 'china', 'estambul',
-            'paris', 'parís', 'roma', 'barcelona', 'madrid', 'venecia', 'suiza',
-            'francia', 'italia', 'españa', 'mikonos', 'mykonos', 'santorini',
-            'capadocia', 'pamukkale', 'pekin', 'pekín', 'shanghai', 'shanghái',
-        ],
-        '🌍',
-        'Europa & Mundo',
-    ),
-    (
-        'playa',
-        [
-            'fortaleza', 'cumbuco', 'meireles', 'puerto madryn', 'madryn', 'mar del plata',
-            'pinamar', 'villa gesell', 'costa atlantica', 'costa atlántica',
-            'frente al mar', 'natal', 'jericoacoara', 'florianopolis',
-            'florianópolis', 'costa do sauipe', 'playa bavaro', 'playa meireles',
-        ],
-        '🏖️',
-        'Playa',
-    ),
-    (
-        'termas',
-        [
-            'termas de rio hondo', 'rio hondo', 'villa carlos paz', 'carlos paz',
-            'federacion', 'federación', 'colon entre rios', 'colón entre ríos',
-            'santa teresa', 'laguna de guayatayoc', 'santiago del estero termal',
-        ],
-        '♨️',
-        'Termas',
-    ),
-    (
-        'brasil',
-        [
-            'brasil', 'brasileiro', 'brasileña', 'gramado', 'canela', 'blumenau',
-            'igrejinha', 'snowland', 'piratuba', 'prata thermas',
-            'pratas thermas', 'termas romanas', 'recanto maestro', 'restinga seca',
-            'restinga sêca', 'rio grande do sul', 'santa catarina', 'porto alegre',
-            'life infinity', 'villa aconchego', 'afago mareiro', 'cerveza',
-            'camboriu', 'camboriú',
-        ],
-        '🇧🇷',
-        'Brasil',
-    ),
+CATEGORIA_CHOICES = [
+    ('argentina', 'Argentina'),
+    ('brasil', 'Brasil'),
+    ('termas', 'Termas'),
+    ('playas', 'Playas'),
+    ('caribe', 'Caribe'),
+    ('europa', 'Europa'),
+    ('mundo', 'Mundo'),
+    ('naturaleza', 'Naturaleza'),
 ]
+
+# slug -> (emoji, etiqueta)
+CATEGORIAS_WEB = {
+    'argentina': ('🇦🇷', 'Argentina'),
+    'brasil': ('🇧🇷', 'Brasil'),
+    'termas': ('♨️', 'Termas'),
+    'playas': ('🏖️', 'Playas'),
+    'caribe': ('🏝️', 'Caribe'),
+    'europa': ('🇪🇺', 'Europa'),
+    'mundo': ('🌍', 'Mundo'),
+    'naturaleza': ('🦭', 'Naturaleza'),
+}
 
 _MARCAS_BRASIL = {
     'brasil', 'gramado', 'canela', 'blumenau', 'piratuba', 'igrejinha', 'snowland',
@@ -102,37 +66,85 @@ def _es_brasil(salida, texto):
     return any(_coincide(texto, marca) for marca in _MARCAS_BRASIL)
 
 
-def _coincide_categoria(texto, claves):
-    return any(_coincide(texto, clave) for clave in claves)
-
-
-def categorizar_salida(salida):
-    """Asigna cat, emoji y cat_label en el objeto salida (in-place)."""
+def inferir_categorias(salida):
+    """Sugiere categorías (migración o paquetes sin categorías guardadas)."""
     texto = _texto_completo(salida)
-    es_brasil = _es_brasil(salida, texto)
+    cats = set()
 
-    for cat, claves, emoji, label in CATEGORIAS:
-        if cat == 'termas' and es_brasil:
-            continue
-        if _coincide_categoria(texto, claves):
-            salida.cat = cat
-            salida.emoji = emoji
-            salida.cat_label = label
-            return salida
+    if any(_coincide(texto, k) for k in (
+        'puerto madryn', 'madryn', 'ballenas', 'pinguinos', 'punta tombo', 'valdes', 'peninsula de valdes',
+    )):
+        cats.update(['argentina', 'naturaleza'])
+        return sorted(cats)
 
-    if es_brasil:
-        salida.cat = 'brasil'
-        salida.emoji = '🇧🇷'
-        salida.cat_label = 'Brasil'
-        return salida
+    if any(_coincide(texto, k) for k in (
+        'punta cana', 'mar caribe', 'caribe', 'bavaro', 'republica dominicana',
+        'dominicana', 'cancun', 'riviera maya',
+    )):
+        cats.update(['caribe', 'playas', 'mundo'])
 
-    salida.cat = 'argentina'
-    salida.emoji = '🇦🇷'
-    salida.cat_label = 'Argentina'
+    if any(_coincide(texto, k) for k in (
+        'europa', 'turquia', 'grecia', 'atenas', 'china', 'estambul', 'paris', 'roma',
+        'barcelona', 'madrid', 'venecia', 'mikonos', 'santorini', 'capadocia', 'pekin',
+    )):
+        cats.update(['europa', 'mundo'])
+
+    if any(_coincide(texto, k) for k in (
+        'fortaleza', 'cumbuco', 'meireles', 'natal', 'porto de galinhas', 'jericoacoara',
+        'florianopolis', 'costa do sauipe',
+    )):
+        cats.update(['playas'])
+        if _es_brasil(salida, texto):
+            cats.add('brasil')
+
+    if any(_coincide(texto, k) for k in (
+        'termas de rio hondo', 'rio hondo', 'villa carlos paz', 'federacion',
+        'colon entre rios', 'santa teresa',
+    )):
+        cats.add('termas')
+
+    if _es_brasil(salida, texto):
+        cats.add('brasil')
+
+    if any(_coincide(texto, k) for k in (
+        'bariloche', 'mendoza', 'salta', 'ushuaia', 'calafate', 'iguazu', 'tucuman',
+        'cataratas', 'patagonia', 'rio hondo', 'termas de rio hondo',
+    )):
+        cats.add('argentina')
+
+    if cats & {'caribe', 'europa', 'mundo'} and 'naturaleza' not in cats:
+        cats.discard('argentina')
+
+    if not cats:
+        cats.add('argentina')
+
+    return sorted(cats)
+
+
+def aplicar_categorias_web(salida):
+    """Asigna atributos de categoría para plantillas (soporta varias por paquete)."""
+    cats = salida.get_categorias_slugs()
+    if not cats:
+        cats = inferir_categorias(salida)
+
+    salida.cats = cats
+    salida.cat = cats[0]
+    labels = [CATEGORIAS_WEB[c][1] for c in cats if c in CATEGORIAS_WEB]
+    salida.cat_label = ' · '.join(labels) if labels else 'Viajes'
+    salida.emoji = CATEGORIAS_WEB.get(cats[0], ('✈️', 'Viajes'))[0]
     return salida
 
 
-def categorizar_salidas(salidas):
+def aplicar_categorias_salidas(salidas):
     for s in salidas:
-        categorizar_salida(s)
+        aplicar_categorias_web(s)
     return salidas
+
+
+# Compatibilidad con imports antiguos
+def categorizar_salida(salida):
+    return aplicar_categorias_web(salida)
+
+
+def categorizar_salidas(salidas):
+    return aplicar_categorias_salidas(salidas)

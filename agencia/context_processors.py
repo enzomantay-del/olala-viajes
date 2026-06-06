@@ -21,6 +21,13 @@ def estado_publicacion_web(request):
     return {'estado_publicacion': leer_estado()}
 
 
+def estado_fotos_salidas(request):
+    if not request.user.is_authenticated:
+        return {'estado_fotos': None}
+    from .fotos_utils import resumen_fotos_salidas
+    return {'estado_fotos': resumen_fotos_salidas()}
+
+
 def alertas_globales(request):
     if not request.user.is_authenticated:
         return {'alertas_salidas': 0, 'alertas_saldos': 0}

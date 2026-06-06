@@ -67,6 +67,7 @@ urlpatterns = [
     path('salidas/', login_required(views.salidas_lista), name='salidas_lista'),
     path('salidas/pdf/', login_required(views.salidas_pdf), name='salidas_pdf'),
     path('salidas/publicar-web/', login_required(views.publicar_web), name='publicar_web'),
+    path('salidas/reiniciar-publicacion/', login_required(views.reiniciar_publicacion_web), name='reiniciar_publicacion_web'),
     path('salidas/whatsapp/', login_required(views.salidas_whatsapp), name='salidas_whatsapp'),
     path('salidas/nueva/', login_required(views.salida_nueva), name='salida_nueva'),
     path('salidas/<int:pk>/editar/', login_required(views.salida_editar), name='salida_editar'),

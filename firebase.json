@@ -18,6 +18,11 @@
           "source": "/accounts/**",
           "destination": "https://olala-viajes.onrender.com/accounts/login/",
           "type": 302
+        },
+        {
+          "source": "/admin/**",
+          "destination": "https://olala-viajes.onrender.com/admin/",
+          "type": 302
         }
       ]
     }
