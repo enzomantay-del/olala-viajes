@@ -51,6 +51,9 @@
     <a href="{% url 'salidas_lista' %}" class="nav-item {% if 'salida' in request.resolver_match.url_name %}active{% endif %}">
       <i class="fas fa-bus"></i><span>Salidas</span>
     </a>
+    <a href="{% url 'web_publica' %}" class="nav-item" target="_blank" rel="noopener">
+      <i class="fas fa-globe"></i><span>Catálogo web</span>
+    </a>
 
     <div class="nav-section">Análisis</div>
     <a href="{% url 'reportes' %}" class="nav-item {% if 'reporte' in request.resolver_match.url_name %}active{% endif %}">

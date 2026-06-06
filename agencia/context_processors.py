@@ -15,12 +15,7 @@ def agencia_sitio(request):
 
 
 def estado_publicacion_web(request):
-    if not request.user.is_authenticated:
-        return {'estado_publicacion': None, 'publicacion_log': ''}
-    from .publish_status import leer_estado, leer_log_publicacion
-    estado = leer_estado()
-    log = leer_log_publicacion() if estado and estado.get('state') == 'running' else ''
-    return {'estado_publicacion': estado, 'publicacion_log': log}
+    return {'estado_publicacion': None, 'publicacion_log': ''}
 
 
 def estado_fotos_salidas(request):

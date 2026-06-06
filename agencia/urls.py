@@ -59,9 +59,11 @@ urlpatterns = [
     path('reportes/cobros/', login_required(views.reporte_cobros), name='reporte_cobros'),
     path('reportes/pagos/', login_required(views.reporte_pagos), name='reporte_pagos'),
 
-    # Web pública (sin autenticación)
+    # Web pública (sin autenticación — catálogo en Render, fotos desde Cloudinary)
     path('web/', views.web_publica, name='web_publica'),
     path('web/paquete/<int:pk>/', views.web_publica_paquete, name='web_publica_paquete'),
+    path('web/flyer/<int:pk>/', views.web_publica_flyer, name='web_publica_flyer'),
+    path('web/og-catalogo.jpg', views.web_og_catalogo, name='web_og_catalogo'),
 
     # Salidas
     path('salidas/', login_required(views.salidas_lista), name='salidas_lista'),

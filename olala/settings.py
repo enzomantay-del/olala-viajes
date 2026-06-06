@@ -138,8 +138,11 @@ AGENCIA_TELEFONO = '+54 9 3743 483429'
 AGENCIA_WHATSAPP = '5493743483429'
 AGENCIA_DIRECCION = 'Jardín América, Misiones, Argentina'
 
-# URL pública del sitio estático (Open Graph y enlaces para compartir)
-PUBLIC_WEB_BASE_URL = os.environ.get('PUBLIC_WEB_BASE_URL', 'https://olala-viajes.web.app').rstrip('/')
+# URL pública del catálogo (Django en /web/, fotos desde Cloudinary)
+PUBLIC_WEB_BASE_URL = os.environ.get(
+    'PUBLIC_WEB_BASE_URL',
+    'https://olala-viajes.onrender.com/web',
+).rstrip('/')
 
 # URL del panel de gestión (login). Debe ser absoluta para el HTML estático de Firebase.
 PANEL_PUBLIC_URL = os.environ.get(

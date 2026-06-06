@@ -1,31 +1,32 @@
-# Despliegue en Render.com (gratis con limitaciones)
-# Conectar el repo de GitHub en https://dashboard.render.com
-
-services:
-  - type: web
-    name: olala-viajes
-    runtime: python
-    plan: free
-    buildCommand: pip install -r requirements.txt && npm install firebase-tools@13.35.1 --no-audit --no-fund && python manage.py collectstatic --noinput && python manage.py migrate --noinput
-    startCommand: gunicorn olala.wsgi:application --bind 0.0.0.0:$PORT
-    envVars:
-      - key: PYTHON_VERSION
-        value: "3.12.0"
-      - key: DJANGO_SECRET_KEY
-        generateValue: true
-      - key: DJANGO_DEBUG
-        value: "False"
-      - key: DJANGO_ALLOWED_HOSTS
-        value: olala-viajes.onrender.com
-      - key: DJANGO_CSRF_TRUSTED_ORIGINS
-        value: https://olala-viajes.onrender.com
-      - key: PANEL_PUBLIC_URL
-        value: https://olala-viajes.onrender.com/accounts/login/
-      - key: PUBLIC_WEB_BASE_URL
-        value: https://olala-viajes.web.app
-      # Crear con: firebase.cmd login:ci  →  pegar token en Render (Environment)
-      - key: FIREBASE_TOKEN
-        sync: false
-      # Cloudinary (fotos que no se borran al reiniciar Render): cloudinary.com → API Keys
-      - key: CLOUDINARY_URL
-        sync: false
+# Despliegue en Render.com (gratis con limitaciones)
+# Conectar el repo de GitHub en https://dashboard.render.com
+
+services:
+  - type: web
+    name: olala-viajes
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput
+    startCommand: gunicorn olala.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: olala-viajes.onrender.com
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        value: https://olala-viajes.onrender.com
+      - key: PANEL_PUBLIC_URL
+        value: https://olala-viajes.onrender.com/accounts/login/
+      - key: PUBLIC_WEB_BASE_URL
+        value: https://olala-viajes.onrender.com/web
+      # Cloudinary (fotos permanentes): CLOUDINARY_CLOUD_NAME + API_KEY + API_SECRET
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false

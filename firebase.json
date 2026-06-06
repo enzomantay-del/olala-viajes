@@ -2,18 +2,9 @@
   "hosting": [
     {
       "target": "olala",
-      "public": "web-export",
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ],
+      "public": "hosting-redirect",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
       "redirects": [
-        {
-          "source": "/accounts/login",
-          "destination": "https://olala-viajes.onrender.com/accounts/login/",
-          "type": 302
-        },
         {
           "source": "/accounts/**",
           "destination": "https://olala-viajes.onrender.com/accounts/login/",

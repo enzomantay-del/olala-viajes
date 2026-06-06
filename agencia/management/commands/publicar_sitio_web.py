@@ -6,7 +6,7 @@ from agencia.publish_worker import ejecutar_publicacion_web
 
 
 class Command(BaseCommand):
-    help = 'Publica olala-viajes.web.app (usado en segundo plano desde el panel).'
+    help = 'Sincroniza fotos en Cloudinary (el catálogo público está en /web/).'
 
     def handle(self, *args, **options):
         self.stdout.write('Iniciando publicación web…')

@@ -699,22 +699,44 @@ def web_publica_paquete(request, pk):
     return render(request, 'web_publica_paquete.html', context)
 
 
-def salida_flyer(request, pk):
-    """Descarga o genera el flyer JPG 9:16 del paquete."""
+def _flyer_response(salida, as_attachment=False):
     from django.conf import settings
 
-    salida = get_object_or_404(Salida.objects.select_related('operadora'), pk=pk)
     categorizar_salida(salida)
     ruta = Path(settings.MEDIA_ROOT) / 'flyers' / f'{salida.pk}.jpg'
     if not ruta.exists():
         generar_flyer_salida(salida, ruta)
-    nombre = f'olala-{salida.pk}-{salida.nombre_paquete[:30].replace(" ", "-")}.jpg'
-    return FileResponse(
-        ruta.open('rb'),
-        content_type='image/jpeg',
-        as_attachment=True,
-        filename=nombre,
-    )
+    kwargs = {'content_type': 'image/jpeg'}
+    if as_attachment:
+        nombre = f'olala-{salida.pk}-{salida.nombre_paquete[:30].replace(" ", "-")}.jpg'
+        kwargs.update(as_attachment=True, filename=nombre)
+    return FileResponse(ruta.open('rb'), **kwargs)
+
+
+def salida_flyer(request, pk):
+    """Descarga o genera el flyer JPG 9:16 del paquete."""
+    salida = get_object_or_404(Salida.objects.select_related('operadora'), pk=pk)
+    return _flyer_response(salida, as_attachment=True)
+
+
+def web_publica_flyer(request, pk):
+    """Flyer público (sin login) para compartir en redes."""
+    salida = get_object_or_404(Salida.objects.select_related('operadora'), pk=pk)
+    return _flyer_response(salida, as_attachment=False)
+
+
+def web_og_catalogo(request):
+    """Imagen Open Graph del catálogo (WhatsApp / redes)."""
+    from django.conf import settings
+
+    from .og_catalogo import generar_og_catalogo
+
+    dest = Path(settings.MEDIA_ROOT)
+    dest.mkdir(parents=True, exist_ok=True)
+    ruta = dest / 'og-catalogo.jpg'
+    if not ruta.exists() or ruta.stat().st_size == 0:
+        generar_og_catalogo(dest)
+    return FileResponse(ruta.open('rb'), content_type='image/jpeg')
 
 
 def salida_eliminar(request, pk):
@@ -791,38 +813,28 @@ window.location.href = "https://wa.me/?text=" + encodeURIComponent(msg);
 
 
 def publicar_web(request):
-    """Inicia publicación en proceso separado (fork en Render)."""
-    from django.conf import settings
-
+    """Sincroniza fotos en Cloudinary. El catálogo público vive en /web/ (sin Firebase)."""
+    from .fotos_cloudinary import sincronizar_todas_las_fotos
     from .fotos_utils import puede_publicar_seguro
-    from .publish_launcher import lanzar_publicacion_en_segundo_plano
-    from .publish_status import iniciar_publicacion, publicacion_en_curso, reiniciar_publicacion
+    from .publish_status import reiniciar_publicacion
+
+    reiniciar_publicacion()
 
     ok_fotos, msg_fotos = puede_publicar_seguro()
     if not ok_fotos:
         messages.error(request, msg_fotos)
         return redirect('salidas_lista')
 
-    if publicacion_en_curso():
-        messages.warning(
-            request,
-            'Ya hay una publicación en curso. Esperá y refrescá, o usá Reiniciar.',
-        )
+    try:
+        sincronizar_todas_las_fotos()
+    except Exception as exc:
+        messages.error(request, f'Error al sincronizar fotos: {exc}')
         return redirect('salidas_lista')
 
-    if not iniciar_publicacion():
-        messages.warning(request, 'No se pudo iniciar la publicación. Intentá de nuevo.')
-        return redirect('salidas_lista')
-
-    ok, error = lanzar_publicacion_en_segundo_plano(settings.BASE_DIR)
-    if not ok:
-        reiniciar_publicacion()
-        messages.error(request, error or 'No se pudo iniciar la publicación.')
-        return redirect('salidas_lista')
-
-    messages.info(
+    web_url = django_settings.PUBLIC_WEB_BASE_URL.rstrip('/') + '/'
+    messages.success(
         request,
-        'Publicación en curso (2–4 min). Esta página se actualiza sola.',
+        f'Fotos sincronizadas. El catálogo ya está en línea: {web_url}',
     )
     return redirect('salidas_lista')
 

@@ -107,8 +107,16 @@ def url_imagen_absoluta(salida, base_url):
     return _url_foto_publica(salida, base_url)
 
 
+def _catalogo_en_django(base_url):
+    base = base_url.rstrip('/')
+    return base.endswith('/web') or 'onrender.com' in base
+
+
 def url_paquete_absoluta(salida, base_url):
-    return f'{base_url.rstrip("/")}/paquete/{salida.pk}.html'
+    base = base_url.rstrip('/')
+    if _catalogo_en_django(base):
+        return f'{base}/paquete/{salida.pk}/'
+    return f'{base}/paquete/{salida.pk}.html'
 
 
 def descripcion_og(salida):
@@ -186,10 +194,10 @@ def preparar_salida_web(salida, base_url, modo='django'):
     else:
         salida.paquete_href = reverse('web_publica_paquete', kwargs={'pk': salida.pk})
         if salida.foto:
-            salida.imagen_src = salida.foto.url
+            salida.imagen_src = _url_foto_publica(salida, base_url)
         else:
             salida.imagen_src = '/static/img/logo-olala.png'
-        salida.flyer_href = reverse('salida_flyer', kwargs={'pk': salida.pk})
+        salida.flyer_href = reverse('web_publica_flyer', kwargs={'pk': salida.pk})
 
     return salida
 

@@ -3,50 +3,30 @@
 {% block topbar_title %}Salidas de Operadoras{% endblock %}
 {% block content %}
 
+<div class="alert alert-info mb-3 py-2" role="alert">
+  <i class="fas fa-globe me-2"></i>
+  <strong>Catálogo público:</strong>
+  <a href="{% url 'web_publica' %}" target="_blank" rel="noopener">{{ public_web_url }}/</a>
+  — se actualiza al instante al guardar salidas. Las fotos vienen de Cloudinary.
+</div>
+
 {% if estado_fotos and estado_fotos.produccion and not estado_fotos.cloudinary %}
 <div class="alert alert-danger mb-3" role="alert">
   <i class="fas fa-exclamation-circle me-2"></i>
-  <strong>Fotos en riesgo:</strong> Render no guarda las imágenes en el servidor.
-  Agregá <code>CLOUDINARY_URL</code> en Render → Environment (cuenta gratis en cloudinary.com).
+  <strong>Fotos en riesgo:</strong> Configurá Cloudinary en Render → Environment
+  (<code>CLOUDINARY_CLOUD_NAME</code>, <code>CLOUDINARY_API_KEY</code>, <code>CLOUDINARY_API_SECRET</code>).
 </div>
 {% elif estado_fotos and estado_fotos.faltan > 0 %}
 <div class="alert alert-warning mb-3" role="alert">
   <i class="fas fa-exclamation-triangle me-2"></i>
-  Faltan {{ estado_fotos.faltan }} foto{{ estado_fotos.faltan|pluralize }} en la nube ({{ estado_fotos.ok }}/{{ estado_fotos.total }}).
-  Al publicar se intentará sincronizar automáticamente.
+  Faltan {{ estado_fotos.faltan }} foto{{ estado_fotos.faltan|pluralize }} en Cloudinary ({{ estado_fotos.ok }}/{{ estado_fotos.total }}).
+  Usá <strong>Sincronizar fotos</strong>.
 </div>
 {% elif estado_fotos and estado_fotos.cloudinary %}
 <div class="alert alert-success mb-3 py-2" role="alert">
   <i class="fas fa-cloud me-2"></i>
-  Fotos en la nube: {{ estado_fotos.ok }}/{{ estado_fotos.total }} — listo para publicar.
+  Fotos en Cloudinary: {{ estado_fotos.ok }}/{{ estado_fotos.total }}.
 </div>
-{% endif %}
-
-{% if estado_publicacion %}
-<div class="alert alert-{% if estado_publicacion.state == 'running' %}info{% elif estado_publicacion.state == 'ok' %}success{% else %}warning{% endif %} mb-3" role="alert">
-  {% if estado_publicacion.state == 'running' %}
-    <span class="spinner-border spinner-border-sm me-2"></span>
-  {% elif estado_publicacion.state == 'ok' %}
-    <i class="fas fa-check-circle me-2"></i>
-  {% else %}
-    <i class="fas fa-exclamation-triangle me-2"></i>
-  {% endif %}
-  <strong>Publicación web:</strong> {{ estado_publicacion.message }}
-  {% if estado_publicacion.finished %}<span class="text-muted small ms-2">({{ estado_publicacion.finished }})</span>{% endif %}
-  {% if estado_publicacion.state == 'running' %}
-    <a href="{% url 'reiniciar_publicacion_web' %}" class="btn btn-sm btn-outline-secondary ms-2"
-       onclick="return confirm('¿Cancelar publicación colgada y reiniciar?')">Reiniciar</a>
-  {% endif %}
-  {% if publicacion_log %}
-    <pre class="small mt-2 mb-0 text-muted" style="white-space:pre-wrap">{{ publicacion_log }}</pre>
-  {% endif %}
-  {% if estado_publicacion.state == 'error' and estado_publicacion.detalle %}
-    <pre class="small mt-2 mb-0 text-danger" style="white-space:pre-wrap">{{ estado_publicacion.detalle }}</pre>
-  {% endif %}
-</div>
-{% if estado_publicacion.state == 'running' %}
-<script>setTimeout(function(){ location.reload(); }, 10000);</script>
-{% endif %}
 {% endif %}
 
 <div class="page-header">
@@ -55,9 +35,12 @@
     <a href="{% url 'salidas_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-outline-secondary" target="_blank">
       <i class="fas fa-file-pdf me-1"></i>PDF
     </a>
-    <a href="{% url 'publicar_web' %}" class="btn btn-primary" id="btn-publicar-web"
-       onclick="return confirmarPublicarWeb()">
-      <i class="fas fa-globe me-1"></i>Publicar en web
+    <a href="{% url 'web_publica' %}" class="btn btn-primary" target="_blank" rel="noopener">
+      <i class="fas fa-globe me-1"></i>Ver catálogo web
+    </a>
+    <a href="{% url 'publicar_web' %}" class="btn btn-outline-primary" id="btn-sincronizar-fotos"
+       onclick="return confirm('¿Subir fotos faltantes a Cloudinary?')">
+      <i class="fas fa-cloud-upload-alt me-1"></i>Sincronizar fotos
     </a>
     <a href="{% url 'salida_nueva' %}" class="btn btn-teal"><i class="fas fa-plus me-1"></i>Nueva salida</a>
   </div>
@@ -342,16 +325,5 @@ document.getElementById('btn-abrir-wa').addEventListener('click', function() {
   window.open('https://web.whatsapp.com/', '_blank');
 });
 
-function confirmarPublicarWeb() {
-  if (!confirm('¿Publicar la web con los datos actuales?\n\nSe actualizará olala-viajes.web.app en 1–2 minutos. Podés seguir usando el panel; refrescá Salidas para ver el resultado.')) {
-    return false;
-  }
-  var btn = document.getElementById('btn-publicar-web');
-  if (btn) {
-    btn.classList.add('disabled');
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Publicando…';
-  }
-  return true;
-}
 </script>
 {% endblock %}
