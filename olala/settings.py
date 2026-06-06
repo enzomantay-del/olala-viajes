@@ -33,7 +33,8 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    *(['cloudinary_storage', 'cloudinary'] if _USE_CLOUDINARY else []),
+    # Solo 'cloudinary' (no cloudinary_storage: rompe collectstatic en Django 5).
+    *(['cloudinary'] if _USE_CLOUDINARY else []),
     'django.contrib.staticfiles',
     'agencia',
 ]
@@ -112,6 +113,8 @@ STORAGES = {
         'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage',
     },
 }
+# django-cloudinary-storage aún lee STATICFILES_STORAGE en collectstatic (Django 5 usa STORAGES).
+STATICFILES_STORAGE = STORAGES['staticfiles']['BACKEND']
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
