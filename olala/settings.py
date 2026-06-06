@@ -23,7 +23,7 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-from agencia.cloudinary_config import cloudinary_disponible
+from olala.cloudinary_config import cloudinary_disponible
 
 _USE_CLOUDINARY = cloudinary_disponible()
 
