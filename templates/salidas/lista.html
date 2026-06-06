@@ -37,9 +37,15 @@
     <a href="{% url 'reiniciar_publicacion_web' %}" class="btn btn-sm btn-outline-secondary ms-2"
        onclick="return confirm('¿Cancelar publicación colgada y reiniciar?')">Reiniciar</a>
   {% endif %}
+  {% if publicacion_log %}
+    <pre class="small mt-2 mb-0 text-muted" style="white-space:pre-wrap">{{ publicacion_log }}</pre>
+  {% endif %}
+  {% if estado_publicacion.state == 'error' and estado_publicacion.detalle %}
+    <pre class="small mt-2 mb-0 text-danger" style="white-space:pre-wrap">{{ estado_publicacion.detalle }}</pre>
+  {% endif %}
 </div>
 {% if estado_publicacion.state == 'running' %}
-<script>setTimeout(function(){ location.reload(); }, 15000);</script>
+<script>setTimeout(function(){ location.reload(); }, 10000);</script>
 {% endif %}
 {% endif %}
 

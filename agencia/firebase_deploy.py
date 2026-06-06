@@ -14,14 +14,19 @@ def _firebase_dir():
 
 
 def _firebase_cmd_base():
-    """Comando base: npx (Render/Linux) o firebase.cmd (Windows)."""
+    """Comando base: node_modules (Render), npx o firebase global."""
+    local_bin = Path(settings.BASE_DIR) / 'node_modules' / '.bin' / 'firebase'
+    if sys.platform == 'win32':
+        local_bin = local_bin.with_suffix('.cmd')
+    if local_bin.exists():
+        return [str(local_bin)]
     if sys.platform == 'win32':
         npm_firebase = Path(os.environ.get('APPDATA', '')) / 'npm' / 'firebase.cmd'
         if npm_firebase.exists():
             return [str(npm_firebase)]
     local_npx = shutil.which('npx')
     if local_npx:
-        return [local_npx, 'firebase-tools']
+        return [local_npx, '--no-install', 'firebase-tools']
     return ['firebase']
 
 

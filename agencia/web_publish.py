@@ -84,15 +84,27 @@ def _copiar_fotos_a_export(salidas, dest_dir, base_url):
             dest.unlink(missing_ok=True)
 
 
-def url_imagen_absoluta(salida, base_url):
-    if salida.foto:
-        url = salida.foto.url
-        if url.startswith('http'):
-            return url
-        nombre = _nombre_archivo_foto(salida)
-        if nombre:
-            return f'{base_url.rstrip("/")}/media/salidas/{nombre}'
+def _url_foto_publica(salida, base_url):
+    if not salida.foto:
+        return f'{base_url.rstrip("/")}/logo.png'
+    url = salida.foto.url
+    if _es_url_remota(url):
+        return _normalizar_url_remota(url)
+    if django_settings.USE_CLOUDINARY_MEDIA:
+        try:
+            import cloudinary.utils
+
+            return cloudinary.utils.cloudinary_url(salida.foto.name, secure=True)[0]
+        except Exception:
+            pass
+    nombre = _nombre_archivo_foto(salida)
+    if nombre:
+        return f'{base_url.rstrip("/")}/media/salidas/{nombre}'
     return f'{base_url.rstrip("/")}/logo.png'
+
+
+def url_imagen_absoluta(salida, base_url):
+    return _url_foto_publica(salida, base_url)
 
 
 def url_paquete_absoluta(salida, base_url):
@@ -160,16 +172,9 @@ def preparar_salida_web(salida, base_url, modo='django'):
     if modo == 'static':
         salida.paquete_href = f'paquete/{salida.pk}.html'
         if salida.foto:
-            url_foto = salida.foto.url
-            if django_settings.USE_CLOUDINARY_MEDIA:
-                salida.imagen_src = (
-                    _normalizar_url_remota(url_foto)
-                    if _es_url_remota(url_foto)
-                    else f'media/salidas/{nombre_foto}'
-                )
-                salida.imagen_es_absoluta = _es_url_remota(url_foto)
-            elif _es_url_remota(url_foto):
-                salida.imagen_src = _normalizar_url_remota(url_foto)
+            url_abs = _url_foto_publica(salida, base_url)
+            if _es_url_remota(url_abs):
+                salida.imagen_src = _normalizar_url_remota(url_abs)
                 salida.imagen_es_absoluta = True
             else:
                 salida.imagen_src = f'media/salidas/{nombre_foto}' if nombre_foto else 'logo.png'

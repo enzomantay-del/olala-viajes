@@ -791,14 +791,12 @@ window.location.href = "https://wa.me/?text=" + encodeURIComponent(msg);
 
 
 def publicar_web(request):
-    """Inicia publicación en un proceso aparte (Gunicorn no corta el hilo)."""
-    import subprocess
-    import sys
-
+    """Inicia publicación en proceso separado (fork en Render)."""
     from django.conf import settings
 
     from .fotos_utils import puede_publicar_seguro
-    from .publish_status import iniciar_publicacion, publicacion_en_curso
+    from .publish_launcher import lanzar_publicacion_en_segundo_plano
+    from .publish_status import iniciar_publicacion, publicacion_en_curso, reiniciar_publicacion
 
     ok_fotos, msg_fotos = puede_publicar_seguro()
     if not ok_fotos:
@@ -808,7 +806,7 @@ def publicar_web(request):
     if publicacion_en_curso():
         messages.warning(
             request,
-            'Ya hay una publicación en curso. Esperá 1–2 minutos y refrescá esta página.',
+            'Ya hay una publicación en curso. Esperá y refrescá, o usá Reiniciar.',
         )
         return redirect('salidas_lista')
 
@@ -816,25 +814,15 @@ def publicar_web(request):
         messages.warning(request, 'No se pudo iniciar la publicación. Intentá de nuevo.')
         return redirect('salidas_lista')
 
-    try:
-        subprocess.Popen(
-            [sys.executable, 'manage.py', 'publicar_sitio_web'],
-            cwd=str(settings.BASE_DIR),
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True,
-        )
-    except OSError as exc:
-        from .publish_status import reiniciar_publicacion
-
+    ok, error = lanzar_publicacion_en_segundo_plano(settings.BASE_DIR)
+    if not ok:
         reiniciar_publicacion()
-        messages.error(request, f'No se pudo iniciar la publicación: {exc}')
+        messages.error(request, error or 'No se pudo iniciar la publicación.')
         return redirect('salidas_lista')
 
     messages.info(
         request,
-        'Publicación iniciada. En 1–3 minutos refrescá Salidas para ver si terminó. '
-        'La web pública será https://olala-viajes.web.app',
+        'Publicación en curso (2–4 min). Esta página se actualiza sola.',
     )
     return redirect('salidas_lista')
 

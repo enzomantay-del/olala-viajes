@@ -10,7 +10,7 @@ from django.conf import settings
 
 _lock = threading.Lock()
 _running = False
-TIMEOUT_SEGUNDOS = 12 * 60
+TIMEOUT_SEGUNDOS = 8 * 60
 
 
 def _status_path():
@@ -88,6 +88,31 @@ def finalizar_publicacion(ok, mensaje, detalle=''):
             ),
             encoding='utf-8',
         )
+
+
+def actualizar_progreso(mensaje):
+    path = _status_path()
+    if not path.exists():
+        return
+    try:
+        estado = json.loads(path.read_text(encoding='utf-8'))
+        if estado.get('state') != 'running':
+            return
+        estado['message'] = mensaje
+        path.write_text(json.dumps(estado, ensure_ascii=False), encoding='utf-8')
+    except (json.JSONDecodeError, OSError):
+        pass
+
+
+def leer_log_publicacion(max_lineas=8):
+    path = Path(settings.BASE_DIR) / '.publish_log.txt'
+    if not path.exists():
+        return ''
+    try:
+        lineas = path.read_text(encoding='utf-8', errors='replace').splitlines()
+        return '\n'.join(lineas[-max_lineas:])
+    except OSError:
+        return ''
 
 
 def reiniciar_publicacion():
