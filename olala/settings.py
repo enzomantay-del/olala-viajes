@@ -138,11 +138,15 @@ AGENCIA_TELEFONO = '+54 9 3743 483429'
 AGENCIA_WHATSAPP = '5493743483429'
 AGENCIA_DIRECCION = 'Jardín América, Misiones, Argentina'
 
-# URL pública del catálogo (Django en /web/, fotos desde Cloudinary)
+# URL pública del catálogo (Firebase Hosting + Supabase)
 PUBLIC_WEB_BASE_URL = os.environ.get(
     'PUBLIC_WEB_BASE_URL',
-    'https://olala-viajes.onrender.com/web',
+    'https://olala-viajes.web.app',
 ).rstrip('/')
+
+SUPABASE_URL = os.environ.get('SUPABASE_URL', '').strip()
+SUPABASE_SERVICE_KEY = os.environ.get('SUPABASE_SERVICE_KEY', '').strip()
+USE_SUPABASE = bool(SUPABASE_URL and SUPABASE_SERVICE_KEY)
 
 # URL del panel de gestión (login). Debe ser absoluta para el HTML estático de Firebase.
 PANEL_PUBLIC_URL = os.environ.get(

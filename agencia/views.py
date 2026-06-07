@@ -813,12 +813,17 @@ window.location.href = "https://wa.me/?text=" + encodeURIComponent(msg);
 
 
 def publicar_web(request):
-    """Sincroniza fotos en Cloudinary. El catálogo público vive en /web/ (sin Firebase)."""
-    from .fotos_cloudinary import sincronizar_todas_las_fotos
+    """Sincroniza salidas y fotos a Supabase (catálogo en olala-viajes.web.app)."""
     from .fotos_utils import puede_publicar_seguro
-    from .publish_status import reiniciar_publicacion
+    from .supabase_sync import sincronizar_todas_las_salidas, supabase_configurado
 
-    reiniciar_publicacion()
+    if not supabase_configurado():
+        messages.error(
+            request,
+            'Falta Supabase en .env: SUPABASE_URL y SUPABASE_SERVICE_KEY '
+            '(Supabase → Settings → API → service_role).',
+        )
+        return redirect('salidas_lista')
 
     ok_fotos, msg_fotos = puede_publicar_seguro()
     if not ok_fotos:
@@ -826,16 +831,13 @@ def publicar_web(request):
         return redirect('salidas_lista')
 
     try:
-        sincronizar_todas_las_fotos()
+        n = sincronizar_todas_las_salidas()
     except Exception as exc:
-        messages.error(request, f'Error al sincronizar fotos: {exc}')
+        messages.error(request, f'Error al sincronizar: {exc}')
         return redirect('salidas_lista')
 
     web_url = django_settings.PUBLIC_WEB_BASE_URL.rstrip('/') + '/'
-    messages.success(
-        request,
-        f'Fotos sincronizadas. El catálogo ya está en línea: {web_url}',
-    )
+    messages.success(request, f'{n} paquetes en Supabase. Catálogo: {web_url}')
     return redirect('salidas_lista')
 
 

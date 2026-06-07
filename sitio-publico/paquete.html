@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paquete | Olalá Viajes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/catalogo.css">
+  <style>
+    .detalle { max-width: 900px; margin: 90px auto 40px; padding: 0 20px; }
+    .detalle img { width: 100%; max-height: 420px; object-fit: cover; border-radius: 12px; margin-bottom: 20px; }
+    .detalle h1 { font-size: 1.6rem; margin-bottom: 12px; }
+    .detalle-meta { color: #64748b; margin-bottom: 16px; }
+    .detalle ul { margin: 12px 0 20px 20px; }
+    .btn-volver { display: inline-block; margin-bottom: 20px; color: #0e7490; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html"><img src="assets/logo-olala.png" alt="Olalá Viajes" class="nav-logo"></a>
+  </nav>
+  <main class="detalle" id="contenido">
+    <a href="index.html" class="btn-volver">← Todos los paquetes</a>
+    <p>Cargando paquete…</p>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script>
+    (async function () {
+      const id = new URLSearchParams(location.search).get('id');
+      const root = document.getElementById('contenido');
+      if (!id) { root.innerHTML = '<p>Paquete no encontrado.</p>'; return; }
+      const client = window.getSupabaseClient();
+      const { data, error } = await client.from('olala_salidas').select('*').eq('id', id).maybeSingle();
+      if (error || !data) { root.innerHTML = '<p>No se encontró el paquete.</p>'; return; }
+      const s = data;
+      const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+      const p = s.fecha_salida.split('-');
+      const fecha = `${Number(p[2])} de ${MESES[Number(p[1])-1]} de ${p[0]}`;
+      const sim = { ARS: '$', USD: 'U$S', BRL: 'R$' }[s.moneda] || s.moneda;
+      const servicios = (s.servicios_incluidos || '').split('\n').filter(l => l.trim()).map(l => `<li>${l.trim()}</li>`).join('');
+      root.innerHTML = `
+        <a href="index.html" class="btn-volver">← Todos los paquetes</a>
+        ${s.imagen_url ? `<img src="${s.imagen_url}" alt="${s.nombre_paquete}">` : ''}
+        <h1>${s.nombre_paquete}</h1>
+        <div class="detalle-meta">📅 ${fecha} · 📍 ${s.lugar_salida || ''}</div>
+        ${s.descripcion ? `<p>${s.descripcion}</p>` : ''}
+        ${servicios ? `<h3>Incluye</h3><ul>${servicios}</ul>` : ''}
+        ${s.precio ? `<p><strong>Desde ${sim} ${Number(s.precio).toLocaleString('es-AR')}</strong> (${s.moneda})</p>` : ''}
+        <a class="btn-naranja" href="https://wa.me/${window.OLALA_WHATSAPP}?text=${encodeURIComponent('Hola! Consulto por ' + s.nombre_paquete)}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
+      `;
+      document.title = s.nombre_paquete + ' | Olalá Viajes';
+    })();
+  </script>
+</body>
+</html>

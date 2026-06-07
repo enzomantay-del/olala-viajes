@@ -1,5 +1,5 @@
 @echo off
-REM Redirige olala-viajes.web.app hacia el catálogo en Render (opcional, una sola vez).
+REM Publica el catálogo en https://olala-viajes.web.app (Firebase, sin Render).
 
 cd /d %~dp0
 
@@ -8,18 +8,22 @@ where firebase.cmd >nul 2>&1
 if %ERRORLEVEL% NEQ 0 set FIREBASE_CMD=npx firebase-tools
 
 echo.
-echo Subiendo redireccion de web.app hacia onrender.com/web ...
-echo (Si falla: firebase.cmd login --reauth)
-echo.
+echo [1/2] Sincronizando paquetes a Supabase...
+if exist venv\Scripts\activate call venv\Scripts\activate
+if exist .env (
+  python manage.py sincronizar_supabase
+) else (
+  echo   Sin .env — saltando sync. Creá .env con SUPABASE_SERVICE_KEY.
+)
 
+echo.
+echo [2/2] Subiendo sitio-publico a olala-viajes.web.app ...
 %FIREBASE_CMD% deploy --only hosting:olala --project turigest-ja --non-interactive
 
 if %ERRORLEVEL% EQU 0 (
   echo.
-  echo Listo. web.app redirige a https://olala-viajes.onrender.com/web/
+  echo Listo: https://olala-viajes.web.app
 ) else (
-  echo.
-  echo Deploy fallo. El catalogo igual funciona en onrender.com/web
+  echo Deploy fallo. Ejecutá: firebase.cmd login --reauth
 )
-
 pause

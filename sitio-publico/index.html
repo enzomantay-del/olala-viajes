@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Olalá! Viajes — Paquetes Turísticos</title>
+  <meta name="description" content="Paquetes turísticos con salidas desde Posadas y Jardín América. Consultanos por WhatsApp.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/catalogo.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <img src="assets/logo-olala.png" alt="Olalá Viajes" class="nav-logo">
+  <ul class="nav-links">
+    <li><a href="#paquetes">Paquetes</a></li>
+    <li><a href="#como">¿Cómo funciona?</a></li>
+    <li><a href="#contacto">Contacto</a></li>
+  </ul>
+  <a href="#" id="nav-wa" class="nav-wa" target="_blank" rel="noopener">Consultar</a>
+  <button class="nav-hamburger" id="hamburger" type="button"><span></span><span></span><span></span></button>
+</nav>
+
+<div class="mobile-menu" id="mobile-menu">
+  <a href="#paquetes">Paquetes</a>
+  <a href="#como">¿Cómo funciona?</a>
+  <a href="#contacto">Contacto</a>
+</div>
+
+<section class="hero">
+  <div class="hero-inner">
+    <h1>Tu próximo viaje, a un <span>mensaje de distancia</span></h1>
+    <p>Paquetes turísticos a destinos increíbles con salidas desde Posadas y Jardín América.</p>
+    <div class="hero-btns">
+      <a href="#paquetes" class="btn-naranja">Ver paquetes disponibles</a>
+      <button type="button" class="btn-ghost-w" id="btn-compartir-catalogo">Compartir catálogo</button>
+    </div>
+  </div>
+</section>
+
+<div class="stats-band">
+  <div class="stats-inner">
+    <div class="stat-item"><div class="stat-num" id="stat-salidas">…</div><div class="stat-lbl">Salidas programadas</div></div>
+    <div class="stat-item"><div class="stat-num">ARS · USD · BRL</div><div class="stat-lbl">Monedas disponibles</div></div>
+  </div>
+</div>
+
+<div class="filtros-wrap">
+  <div class="filtros">
+    <button class="filtro-btn active" type="button" onclick="filtrar('todos', this)">Todos</button>
+    <button class="filtro-btn" type="button" onclick="filtrar('argentina', this)">🇦🇷 Argentina</button>
+    <button class="filtro-btn" type="button" onclick="filtrar('brasil', this)">🇧🇷 Brasil</button>
+    <button class="filtro-btn" type="button" onclick="filtrar('termas', this)">♨️ Termas</button>
+    <button class="filtro-btn" type="button" onclick="filtrar('playas', this)">🏖️ Playas</button>
+    <button class="filtro-btn" type="button" onclick="filtrar('caribe', this)">🏝️ Caribe</button>
+    <button class="filtro-btn" type="button" onclick="filtrar('europa', this)">🇪🇺 Europa</button>
+    <button class="filtro-btn" type="button" onclick="filtrar('mundo', this)">🌍 Mundo</button>
+    <button class="filtro-btn" type="button" onclick="filtrar('naturaleza', this)">🦭 Naturaleza</button>
+  </div>
+</div>
+
+<section id="paquetes">
+  <div class="paquetes-section">
+    <div class="paquetes-header">
+      <div>
+        <div class="paquetes-titulo">Salidas programadas</div>
+        <div class="paquetes-sub">Precios por persona · Consultanos disponibilidad</div>
+      </div>
+      <span id="resultado-count">0 paquetes</span>
+    </div>
+    <p id="loading-msg" class="paquetes-sub">Cargando paquetes…</p>
+    <div class="paquetes-grid" id="grilla"></div>
+    <div class="sin-resultados" id="sin-resultados">
+      <p style="font-size:2rem;margin-bottom:8px;">🔍</p>
+      <p>No hay paquetes en esta categoría en este momento.</p>
+    </div>
+  </div>
+</section>
+
+<section id="como" style="background:#fff">
+  <div class="como-section">
+    <h2 class="como-titulo">¿Cómo funciona?</h2>
+    <p class="como-sub">Elegís, consultás por WhatsApp y viajás.</p>
+    <div class="como-grid">
+      <div class="como-card"><div class="como-ico">🔍</div><h4>Elegís el paquete</h4><p>Explorás las salidas disponibles.</p></div>
+      <div class="como-card"><div class="como-ico">💬</div><h4>Consultás</h4><p>Nos escribís y te respondemos rápido.</p></div>
+      <div class="como-card"><div class="como-ico">✅</div><h4>Confirmamos</h4><p>Verificamos lugares y precio actualizado.</p></div>
+      <div class="como-card"><div class="como-ico">✈️</div><h4>¡A viajar!</h4><p>Coordinamos el pago y los detalles.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="contacto" class="contacto-section">
+  <div class="contacto-inner">
+    <h2>¿Tenés alguna consulta?</h2>
+    <p>Escribinos por WhatsApp o email.</p>
+    <div class="contacto-canales">
+      <a href="#" id="contacto-wa" class="canal-btn wa" target="_blank" rel="noopener"></a>
+      <a href="#" id="contacto-mail" class="canal-btn"></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p style="font-size:1.3rem;font-weight:800;color:white;">Olala<span style="color:#f97316">!</span> Viajes</p>
+  <p>© 2026 Olalá Viajes · Jardín América, Misiones</p>
+  <a href="#" id="panel-link" class="footer-panel" target="_blank" rel="noopener">Acceso agencia (panel)</a>
+</footer>
+
+<a class="wa-float" id="wa-float" href="#" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <svg viewBox="0 0 32 32"><path d="M16 2C8.268 2 2 8.268 2 16c0 2.493.651 4.835 1.787 6.865L2 30l7.353-1.768A13.94 13.94 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2z"/></svg>
+</a>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/catalogo.js"></script>
+<script>
+  const wa = 'https://wa.me/' + (window.OLALA_WHATSAPP || '5493743483429');
+  const msg = '?text=' + encodeURIComponent('Hola! Quiero consultar sobre los paquetes de Olalá Viajes.');
+  ['nav-wa','wa-float','contacto-wa'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.href = wa + msg; if (id === 'contacto-wa') el.textContent = window.OLALA_TELEFONO || ''; }
+  });
+  const mail = document.getElementById('contacto-mail');
+  if (mail) { mail.href = 'mailto:' + (window.OLALA_EMAIL || ''); mail.textContent = '📧 ' + (window.OLALA_EMAIL || ''); }
+  const panel = document.getElementById('panel-link');
+  if (panel) panel.href = window.OLALA_PANEL_URL || '#';
+</script>
+</body>
+</html>

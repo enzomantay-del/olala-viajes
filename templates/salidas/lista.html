@@ -5,27 +5,25 @@
 
 <div class="alert alert-info mb-3 py-2" role="alert">
   <i class="fas fa-globe me-2"></i>
-  <strong>Catálogo público:</strong>
-  <a href="{% url 'web_publica' %}" target="_blank" rel="noopener">{{ public_web_url }}/</a>
-  — se actualiza al instante al guardar salidas. Las fotos vienen de Cloudinary.
+  <strong>Catálogo para clientes:</strong>
+  <a href="{{ public_web_url }}/" target="_blank" rel="noopener">{{ public_web_url }}/</a>
+  — Firebase + Supabase (como Jardín Sale Week). Al guardar una salida se sincroniza sola.
 </div>
 
-{% if estado_fotos and estado_fotos.produccion and not estado_fotos.cloudinary %}
-<div class="alert alert-danger mb-3" role="alert">
-  <i class="fas fa-exclamation-circle me-2"></i>
-  <strong>Fotos en riesgo:</strong> Configurá Cloudinary en Render → Environment
-  (<code>CLOUDINARY_CLOUD_NAME</code>, <code>CLOUDINARY_API_KEY</code>, <code>CLOUDINARY_API_SECRET</code>).
+{% if estado_fotos and not estado_fotos.supabase %}
+<div class="alert alert-warning mb-3" role="alert">
+  <i class="fas fa-exclamation-triangle me-2"></i>
+  Configurá <code>SUPABASE_URL</code> y <code>SUPABASE_SERVICE_KEY</code> en el archivo <code>.env</code> del panel.
 </div>
 {% elif estado_fotos and estado_fotos.faltan > 0 %}
 <div class="alert alert-warning mb-3" role="alert">
   <i class="fas fa-exclamation-triangle me-2"></i>
-  Faltan {{ estado_fotos.faltan }} foto{{ estado_fotos.faltan|pluralize }} en Cloudinary ({{ estado_fotos.ok }}/{{ estado_fotos.total }}).
-  Usá <strong>Sincronizar fotos</strong>.
+  Faltan {{ estado_fotos.faltan }} foto{{ estado_fotos.faltan|pluralize }} locales ({{ estado_fotos.ok }}/{{ estado_fotos.total }}).
 </div>
-{% elif estado_fotos and estado_fotos.cloudinary %}
+{% elif estado_fotos and estado_fotos.supabase %}
 <div class="alert alert-success mb-3 py-2" role="alert">
   <i class="fas fa-cloud me-2"></i>
-  Fotos en Cloudinary: {{ estado_fotos.ok }}/{{ estado_fotos.total }}.
+  Supabase listo · {{ estado_fotos.ok }}/{{ estado_fotos.total }} fotos disponibles.
 </div>
 {% endif %}
 
@@ -35,12 +33,12 @@
     <a href="{% url 'salidas_pdf' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}" class="btn btn-outline-secondary" target="_blank">
       <i class="fas fa-file-pdf me-1"></i>PDF
     </a>
-    <a href="{% url 'web_publica' %}" class="btn btn-primary" target="_blank" rel="noopener">
+    <a href="{{ public_web_url }}/" class="btn btn-primary" target="_blank" rel="noopener">
       <i class="fas fa-globe me-1"></i>Ver catálogo web
     </a>
-    <a href="{% url 'publicar_web' %}" class="btn btn-outline-primary" id="btn-sincronizar-fotos"
-       onclick="return confirm('¿Subir fotos faltantes a Cloudinary?')">
-      <i class="fas fa-cloud-upload-alt me-1"></i>Sincronizar fotos
+    <a href="{% url 'publicar_web' %}" class="btn btn-outline-primary"
+       onclick="return confirm('¿Subir todos los paquetes y fotos a Supabase?')">
+      <i class="fas fa-cloud-upload-alt me-1"></i>Sincronizar catálogo
     </a>
     <a href="{% url 'salida_nueva' %}" class="btn btn-teal"><i class="fas fa-plus me-1"></i>Nueva salida</a>
   </div>

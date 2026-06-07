@@ -2,18 +2,12 @@
   "hosting": [
     {
       "target": "olala",
-      "public": "hosting-redirect",
+      "public": "sitio-publico",
       "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-      "redirects": [
+      "headers": [
         {
-          "source": "/accounts/**",
-          "destination": "https://olala-viajes.onrender.com/accounts/login/",
-          "type": 302
-        },
-        {
-          "source": "/admin/**",
-          "destination": "https://olala-viajes.onrender.com/admin/",
-          "type": 302
+          "source": "**/*.html",
+          "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
         }
       ]
     }
