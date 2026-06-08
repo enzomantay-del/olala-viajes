@@ -31,5 +31,14 @@ create policy "olala_salidas_lectura_publica"
   on public.olala_salidas for select
   using (visible = true);
 
--- Bucket de fotos (Storage → New bucket → nombre: olala-salidas → Public)
--- Política de lectura pública en el bucket para objetos.
+-- Bucket olala-salidas: crealo en Storage → Public (ya lo hiciste).
+-- Política para que las fotos se vean en la web (ejecutá esto en SQL Editor):
+
+insert into storage.buckets (id, name, public)
+values ('olala-salidas', 'olala-salidas', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "public_can_read_olala_salidas" on storage.objects;
+create policy "public_can_read_olala_salidas"
+on storage.objects for select to public
+using (bucket_id = 'olala-salidas');

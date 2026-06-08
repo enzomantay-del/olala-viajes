@@ -3,56 +3,52 @@
 import json
 import mimetypes
 import os
-import urllib.error
-import urllib.request
 from pathlib import Path
 
+import certifi
+import requests
 from django.conf import settings
 
 from .salidas_utils import categorizar_salida
 
 BUCKET = 'olala-salidas'
 TABLE = 'olala_salidas'
-MESES = [
-    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
-]
+VERIFY = certifi.where()
+TIMEOUT = 120
 
 
 def supabase_configurado():
     return bool(getattr(settings, 'USE_SUPABASE', False))
 
 
-def _headers(prefer=None):
+def _session():
+    s = requests.Session()
     key = settings.SUPABASE_SERVICE_KEY
-    headers = {
+    s.headers.update({
         'apikey': key,
         'Authorization': f'Bearer {key}',
-    }
-    if prefer:
-        headers['Prefer'] = prefer
-    return headers
+    })
+    return s
 
 
 def _request(method, path, data=None, extra_headers=None):
     url = f'{settings.SUPABASE_URL.rstrip("/")}{path}'
-    body = None
-    headers = _headers()
-    if extra_headers:
-        headers.update(extra_headers)
+    headers = extra_headers or {}
     if data is not None:
-        body = json.dumps(data, ensure_ascii=False).encode('utf-8')
         headers['Content-Type'] = 'application/json'
-    req = urllib.request.Request(url, data=body, headers=headers, method=method)
-    try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            raw = resp.read()
-            if not raw:
-                return None
-            return json.loads(raw.decode('utf-8'))
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode('utf-8', errors='replace')
-        raise RuntimeError(f'Supabase {method} {path} → {exc.code}: {detail[:400]}') from exc
+    resp = _session().request(
+        method,
+        url,
+        headers=headers,
+        data=json.dumps(data, ensure_ascii=False).encode('utf-8') if data is not None else None,
+        timeout=TIMEOUT,
+        verify=VERIFY,
+    )
+    if resp.status_code >= 400:
+        raise RuntimeError(f'Supabase {method} {path} → {resp.status_code}: {resp.text[:400]}')
+    if resp.text:
+        return resp.json()
+    return None
 
 
 def _buscar_foto_local(salida):
@@ -83,8 +79,9 @@ def _leer_bytes_foto(salida):
     try:
         url = salida.foto.url
         if url.startswith(('http://', 'https://')):
-            with urllib.request.urlopen(url, timeout=60) as resp:
-                return resp.read(), os.path.basename(salida.foto.name)
+            r = requests.get(url, timeout=60, verify=VERIFY)
+            r.raise_for_status()
+            return r.content, os.path.basename(salida.foto.name)
     except Exception:
         pass
     return None, None
@@ -101,23 +98,20 @@ def _subir_foto_storage(salida):
         f'{settings.SUPABASE_URL.rstrip("/")}/storage/v1/object/'
         f'{BUCKET}/{object_path}'
     )
-    headers = _headers()
-    headers['Content-Type'] = mime
-    headers['x-upsert'] = 'true'
-    req = urllib.request.Request(url, data=contenido, headers=headers, method='POST')
-    try:
-        urllib.request.urlopen(req, timeout=120)
-    except urllib.error.HTTPError as exc:
-        if exc.code not in (400, 409):
-            detail = exc.read().decode('utf-8', errors='replace')
-            raise RuntimeError(f'No se pudo subir foto a Supabase: {detail[:300]}') from exc
-        # 409 = ya existe; seguimos con la URL pública
+    resp = _session().post(
+        url,
+        data=contenido,
+        headers={'Content-Type': mime, 'x-upsert': 'true'},
+        timeout=TIMEOUT,
+        verify=VERIFY,
+    )
+    if resp.status_code not in (200, 201) and resp.status_code not in (400, 409):
+        raise RuntimeError(f'No se pudo subir foto: {resp.status_code} {resp.text[:300]}')
 
-    public_url = (
+    return (
         f'{settings.SUPABASE_URL.rstrip("/")}/storage/v1/object/public/'
         f'{BUCKET}/{object_path}'
     )
-    return public_url
 
 
 def _payload_salida(salida, imagen_url=''):

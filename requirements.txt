@@ -7,3 +7,6 @@ dj-database-url>=2.1
 psycopg2-binary>=2.9
 cloudinary>=1.40
 django-cloudinary-storage>=0.3
+certifi>=2024.0
+requests>=2.31
+pip-system-certs>=4.0; sys_platform == 'win32'

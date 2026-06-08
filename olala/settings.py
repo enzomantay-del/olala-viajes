@@ -3,6 +3,18 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+_env_path = BASE_DIR / '.env'
+if _env_path.exists():
+    for line in _env_path.read_text(encoding='utf-8').splitlines():
+        line = line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        key, _, value = line.partition('=')
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
 SECRET_KEY = os.environ.get(
     'DJANGO_SECRET_KEY',
     'olala-viajes-clave-secreta-2024-cambiar-si-se-expone',
