@@ -21,8 +21,11 @@ create table if not exists public.olala_salidas (
   emoji text default '✈️',
   operadora_nombre text default '',
   visible boolean default true,
+  flyer_url text default '',
   updated_at timestamptz default now()
 );
+
+alter table public.olala_salidas add column if not exists flyer_url text default '';
 
 alter table public.olala_salidas enable row level security;
 

@@ -87,13 +87,7 @@ def _leer_bytes_foto(salida):
     return None, None
 
 
-def _subir_foto_storage(salida):
-    contenido, nombre = _leer_bytes_foto(salida)
-    if not contenido or not nombre:
-        return ''
-
-    object_path = f'{salida.pk}/{nombre}'
-    mime = mimetypes.guess_type(nombre)[0] or 'application/octet-stream'
+def _subir_bytes_storage(object_path, contenido, mime='image/jpeg'):
     url = (
         f'{settings.SUPABASE_URL.rstrip("/")}/storage/v1/object/'
         f'{BUCKET}/{object_path}'
@@ -105,16 +99,36 @@ def _subir_foto_storage(salida):
         timeout=TIMEOUT,
         verify=VERIFY,
     )
-    if resp.status_code not in (200, 201) and resp.status_code not in (400, 409):
-        raise RuntimeError(f'No se pudo subir foto: {resp.status_code} {resp.text[:300]}')
-
+    if resp.status_code not in (200, 201, 400, 409):
+        raise RuntimeError(f'No se pudo subir archivo: {resp.status_code} {resp.text[:300]}')
     return (
         f'{settings.SUPABASE_URL.rstrip("/")}/storage/v1/object/public/'
         f'{BUCKET}/{object_path}'
     )
 
 
-def _payload_salida(salida, imagen_url=''):
+def _subir_foto_storage(salida):
+    contenido, nombre = _leer_bytes_foto(salida)
+    if not contenido or not nombre:
+        return ''
+
+    object_path = f'{salida.pk}/{nombre}'
+    mime = mimetypes.guess_type(nombre)[0] or 'application/octet-stream'
+    return _subir_bytes_storage(object_path, contenido, mime)
+
+
+def _subir_flyer_storage(salida):
+    from .flyer_utils import generar_flyer_salida
+
+    categorizar_salida(salida)
+    ruta = Path(settings.MEDIA_ROOT) / 'flyers' / f'{salida.pk}.jpg'
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    if not ruta.exists() or ruta.stat().st_size == 0:
+        generar_flyer_salida(salida, ruta)
+    return _subir_bytes_storage(f'{salida.pk}/flyer.jpg', ruta.read_bytes(), 'image/jpeg')
+
+
+def _payload_salida(salida, imagen_url='', flyer_url=''):
     categorizar_salida(salida)
     operadora = ''
     if salida.operadora_id and salida.operadora:
@@ -128,6 +142,7 @@ def _payload_salida(salida, imagen_url=''):
         'descripcion': salida.descripcion or '',
         'servicios_incluidos': salida.servicios_incluidos or '',
         'imagen_url': imagen_url,
+        'flyer_url': flyer_url,
         'precio': precio,
         'moneda': salida.moneda or 'ARS',
         'cupos': salida.cupos,
@@ -152,7 +167,13 @@ def sincronizar_salida(salida):
     if salida.foto:
         imagen_url = _subir_foto_storage(salida)
 
-    payload = _payload_salida(salida, imagen_url=imagen_url)
+    flyer_url = ''
+    try:
+        flyer_url = _subir_flyer_storage(salida)
+    except Exception:
+        pass
+
+    payload = _payload_salida(salida, imagen_url=imagen_url, flyer_url=flyer_url)
     _request(
         'POST',
         f'/rest/v1/{TABLE}',
