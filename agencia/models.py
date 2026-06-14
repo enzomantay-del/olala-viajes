@@ -329,6 +329,7 @@ class Salida(models.Model):
     cupos = models.PositiveIntegerField('Lugares disponibles', null=True, blank=True)
     vacaciones_invierno = models.BooleanField('Vacaciones de invierno', default=False)
     agotado = models.BooleanField('Agotado', default=False)
+    salida_confirmada = models.BooleanField('Salida confirmada', default=False)
     categorias = models.JSONField(
         'Categorías web',
         default=list,

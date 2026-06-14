@@ -87,6 +87,10 @@
             {{ form.agotado }}
             <label class="form-check-label fw-semibold text-danger">Marcar como AGOTADO <small class="text-muted fw-normal">(aparece en la web)</small></label>
           </div>
+          <div class="col-12 d-flex align-items-center gap-2 mt-1">
+            {{ form.salida_confirmada }}
+            <label class="form-check-label fw-semibold text-success">Salida confirmada <small class="text-muted fw-normal">(badge verde en la web)</small></label>
+          </div>
           <div class="col-12">
             <label class="form-label">Notas internas</label>
             {{ form.notas }}

@@ -167,7 +167,8 @@ class SalidaForm(forms.ModelForm):
         fields = [
             'operadora', 'nombre_paquete', 'fecha_salida', 'lugar_salida',
             'pasa_por_jardin_america', 'categorias', 'descripcion', 'servicios_incluidos',
-            'foto', 'precio', 'moneda', 'cupos', 'vacaciones_invierno', 'agotado', 'notas'
+            'foto', 'precio', 'moneda', 'cupos', 'vacaciones_invierno', 'agotado',
+            'salida_confirmada', 'notas'
         ]
         widgets = {
             'operadora': forms.Select(attrs={'class': 'form-select'}),
@@ -183,6 +184,7 @@ class SalidaForm(forms.ModelForm):
             'cupos': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
             'vacaciones_invierno': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'agotado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'salida_confirmada': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'notas': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 

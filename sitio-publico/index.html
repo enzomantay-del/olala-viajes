@@ -4,17 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Olalá! Viajes — Paquetes Turísticos</title>
-  <meta name="description" content="Paquetes turísticos con salidas desde Posadas y Jardín América. Consultanos por WhatsApp.">
+  <meta name="description" content="Ingresá y conocé todas las salidas grupales que tenemos para vos. Salidas desde Posadas y Jardín América.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Olalá Viajes">
+  <meta property="og:title" content="Olalá Viajes — Paquetes turísticos">
+  <meta property="og:description" content="Ingresá y conocé todas las salidas grupales que tenemos para vos">
+  <meta property="og:image" content="https://olala-viajes.web.app/assets/og-catalogo.jpg">
+  <meta property="og:image:secure_url" content="https://olala-viajes.web.app/assets/og-catalogo.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="https://olala-viajes.web.app/">
+  <meta property="og:locale" content="es_AR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Olalá Viajes — Paquetes turísticos">
+  <meta name="twitter:description" content="Ingresá y conocé todas las salidas grupales que tenemos para vos">
+  <meta name="twitter:image" content="https://olala-viajes.web.app/assets/og-catalogo.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/catalogo.css">
+  <link rel="stylesheet" href="css/catalogo.css?v=20260615">
 </head>
 <body>
 
 <nav class="navbar">
-  <img src="assets/logo-olala.png" alt="Olalá Viajes" class="nav-logo">
+  <img src="assets/logo-blanco.png" alt="Olalá Viajes" class="nav-logo">
   <ul class="nav-links">
+    <li><a href="#asistente">Asistente</a></li>
     <li><a href="#paquetes">Paquetes</a></li>
+    <li><a href="#alertas">Alertas</a></li>
+    <li><a href="#cotizar">Cotizar viaje</a></li>
     <li><a href="#como">¿Cómo funciona?</a></li>
     <li><a href="#contacto">Contacto</a></li>
   </ul>
@@ -23,17 +41,28 @@
 </nav>
 
 <div class="mobile-menu" id="mobile-menu">
+  <a href="#asistente">Asistente</a>
   <a href="#paquetes">Paquetes</a>
+  <a href="#alertas">Alertas</a>
+  <a href="#cotizar">Cotizar viaje</a>
   <a href="#como">¿Cómo funciona?</a>
   <a href="#contacto">Contacto</a>
 </div>
 
 <section class="hero">
+  <div class="hero-photos" aria-hidden="true">
+    <img src="https://ldtfdsipdjrmcgcsbrfc.supabase.co/storage/v1/object/public/olala-salidas/12/images_11.jfif" alt="">
+    <img src="https://ldtfdsipdjrmcgcsbrfc.supabase.co/storage/v1/object/public/olala-salidas/34/images_24_V8aBFZW.jfif" alt="">
+    <img src="https://ldtfdsipdjrmcgcsbrfc.supabase.co/storage/v1/object/public/olala-salidas/15/images_8.jfif" alt="">
+    <img src="https://ldtfdsipdjrmcgcsbrfc.supabase.co/storage/v1/object/public/olala-salidas/31/bahia-principe-explore-punta-cana-galeria-hotel-mobile-0b8426d083819a5092bbbd75e4df4fbe.webp" alt="">
+    <img src="https://ldtfdsipdjrmcgcsbrfc.supabase.co/storage/v1/object/public/olala-salidas/1/3-1024x683.avif" alt="">
+  </div>
   <div class="hero-inner">
     <h1>Tu próximo viaje, a un <span>mensaje de distancia</span></h1>
     <p>Paquetes turísticos a destinos increíbles con salidas desde Posadas y Jardín América.</p>
     <div class="hero-btns">
-      <a href="#paquetes" class="btn-naranja">Ver paquetes disponibles</a>
+      <a href="#asistente" class="btn-naranja">¿Qué viaje me conviene?</a>
+      <a href="#paquetes" class="btn-ghost-w">Ver paquetes disponibles</a>
       <button type="button" class="btn-ghost-w" id="btn-compartir-catalogo">Compartir catálogo</button>
     </div>
   </div>
@@ -60,6 +89,18 @@
   </div>
 </div>
 
+<section id="asistente" class="asistente-section">
+  <div class="asistente-wrap">
+    <div class="asistente-header">
+      <h2>¿Qué viaje me conviene?</h2>
+      <p>Respondé unas preguntas y te recomendamos los paquetes que mejor encajan con vos.</p>
+    </div>
+    <div id="asistente-app" class="asistente-app">
+      <p class="asistente-cargando">Cargando paquetes…</p>
+    </div>
+  </div>
+</section>
+
 <section id="paquetes">
   <div class="paquetes-section">
     <div class="paquetes-header">
@@ -67,14 +108,67 @@
         <div class="paquetes-titulo">Salidas programadas</div>
         <div class="paquetes-sub">Precios por persona · Consultanos disponibilidad</div>
       </div>
-      <span id="resultado-count">0 paquetes</span>
+      <div class="paquetes-header-right">
+        <div class="vista-toggle" role="tablist">
+          <button type="button" class="vista-btn active" id="vista-lista" data-vista="lista">Lista</button>
+          <button type="button" class="vista-btn" id="vista-calendario" data-vista="calendario">Calendario</button>
+        </div>
+        <span id="resultado-count">0 paquetes</span>
+      </div>
     </div>
-    <p id="loading-msg" class="paquetes-sub">Cargando paquetes…</p>
-    <div class="paquetes-grid" id="grilla"></div>
-    <div class="sin-resultados" id="sin-resultados">
-      <p style="font-size:2rem;margin-bottom:8px;">🔍</p>
-      <p>No hay paquetes en esta categoría en este momento.</p>
+    <div id="vista-lista-panel">
+      <p id="loading-msg" class="paquetes-sub">Cargando paquetes…</p>
+      <div class="paquetes-grid" id="grilla"></div>
+      <div class="sin-resultados" id="sin-resultados">
+        <p style="font-size:2rem;margin-bottom:8px;">🔍</p>
+        <p>No hay paquetes en esta categoría en este momento.</p>
+      </div>
     </div>
+    <div id="vista-calendario-panel" class="vista-calendario-panel" hidden>
+      <div id="calendario-app"></div>
+    </div>
+  </div>
+</section>
+
+<section id="alertas" class="alertas-section">
+  <div class="alertas-wrap">
+    <div class="alertas-header">
+      <h2>Avisame cuando salga</h2>
+      <p>¿Buscás un destino que todavía no está? Dejanos tus datos y te avisamos cuando publiquemos una salida que coincida.</p>
+    </div>
+    <form id="form-alerta" class="alertas-form" novalidate>
+      <div class="alertas-grid">
+        <label class="cotizar-field">
+          <span>Destino</span>
+          <input type="text" id="alerta-destino" class="cotizar-input" placeholder="Ej: Europa, Cancún, Bariloche…">
+        </label>
+        <label class="cotizar-field">
+          <span>Categoría</span>
+          <select id="alerta-categoria" class="cotizar-input"></select>
+        </label>
+        <label class="cotizar-field">
+          <span>Fecha desde</span>
+          <input type="date" id="alerta-desde" class="cotizar-input">
+        </label>
+        <label class="cotizar-field">
+          <span>Fecha hasta</span>
+          <input type="date" id="alerta-hasta" class="cotizar-input">
+        </label>
+        <label class="cotizar-field">
+          <span>Email</span>
+          <input type="email" id="alerta-email" class="cotizar-input" placeholder="tu@email.com">
+        </label>
+        <label class="cotizar-field">
+          <span>WhatsApp</span>
+          <input type="tel" id="alerta-whatsapp" class="cotizar-input" placeholder="Ej: 3743 123456">
+        </label>
+        <p class="cotizar-nota cotizar-field-full">Indicá al menos destino o categoría, y email o WhatsApp.</p>
+      </div>
+      <div class="cotizar-actions">
+        <button type="submit" class="btn-naranja" id="btn-enviar-alerta">Activar alerta</button>
+        <p id="alerta-estado" class="cotizar-estado" hidden></p>
+      </div>
+    </form>
   </div>
 </section>
 
@@ -91,6 +185,77 @@
   </div>
 </section>
 
+<section id="cotizar" class="cotizar-section">
+  <div class="cotizar-wrap">
+    <div class="cotizar-header">
+      <h2>Solicitá tu cotización</h2>
+      <p class="cotizar-lead">Podemos cotizarte <strong>paquetes armados</strong> o <strong>servicios sueltos</strong> (vuelos, hoteles, traslados, excursiones) a <strong>cualquier parte del mundo</strong>. Completá el formulario y te respondemos por mail o WhatsApp.</p>
+    </div>
+    <form id="form-cotizar" class="cotizar-form" novalidate>
+      <div class="cotizar-grid">
+        <label class="cotizar-field cotizar-field-full">
+          <span>Destino *</span>
+          <input type="text" id="cotizar-destino" class="cotizar-input" placeholder="Ej: Cancún, Europa, Bariloche…" required>
+        </label>
+        <label class="cotizar-field">
+          <span>Fecha de salida *</span>
+          <input type="date" id="cotizar-fecha" class="cotizar-input" required>
+        </label>
+        <label class="cotizar-field">
+          <span>Noches en destino *</span>
+          <input type="number" id="cotizar-noches" class="cotizar-input" min="1" max="90" value="7" required>
+        </label>
+        <label class="cotizar-field">
+          <span>Categoría de hotel *</span>
+          <select id="cotizar-hotel" class="cotizar-input" required>
+            <option value="sin_preferencia">Sin preferencia</option>
+            <option value="economico">Económico (2*)</option>
+            <option value="estandar_3" selected>Estándar (3*)</option>
+            <option value="superior_4">Superior (4*)</option>
+            <option value="lujo_5">Lujo (5*)</option>
+          </select>
+        </label>
+        <label class="cotizar-field">
+          <span>Régimen alimenticio *</span>
+          <select id="cotizar-regimen" class="cotizar-input" required>
+            <option value="sin_regimen">Sin régimen</option>
+            <option value="desayuno">Desayuno</option>
+            <option value="media_pension">Media pensión</option>
+            <option value="pension_completa">Pensión completa</option>
+            <option value="all_inclusive">All inclusive</option>
+          </select>
+        </label>
+        <label class="cotizar-field">
+          <span>Adultos *</span>
+          <input type="number" id="cotizar-adultos" class="cotizar-input" min="1" max="20" value="2" required>
+        </label>
+        <div class="cotizar-field cotizar-field-full cotizar-menores">
+          <span>Menores (edad de cada uno)</span>
+          <div id="menores-lista" class="menores-lista"></div>
+          <button type="button" class="btn-agregar-menor" id="btn-agregar-menor">+ Agregar menor</button>
+        </div>
+        <label class="cotizar-field cotizar-field-full">
+          <span>Aclaraciones</span>
+          <textarea id="cotizar-aclaraciones" class="cotizar-input cotizar-textarea" rows="4" placeholder="Fechas flexibles, habitación familiar, excursiones, presupuesto aproximado…"></textarea>
+        </label>
+        <label class="cotizar-field">
+          <span>Email</span>
+          <input type="email" id="cotizar-email" class="cotizar-input" placeholder="tu@email.com">
+        </label>
+        <label class="cotizar-field">
+          <span>WhatsApp</span>
+          <input type="tel" id="cotizar-whatsapp" class="cotizar-input" placeholder="Ej: 3743 123456">
+        </label>
+        <p class="cotizar-nota cotizar-field-full">* Indicá al menos email o WhatsApp para que podamos responderte.</p>
+      </div>
+      <div class="cotizar-actions">
+        <button type="submit" class="btn-naranja" id="btn-enviar-cotizacion">Solicitar cotización</button>
+        <p id="cotizar-estado" class="cotizar-estado" hidden></p>
+      </div>
+    </form>
+  </div>
+</section>
+
 <section id="contacto" class="contacto-section">
   <div class="contacto-inner">
     <h2>¿Tenés alguna consulta?</h2>
@@ -98,6 +263,19 @@
     <div class="contacto-canales">
       <a href="#" id="contacto-wa" class="canal-btn wa" target="_blank" rel="noopener"></a>
       <a href="#" id="contacto-mail" class="canal-btn"></a>
+    </div>
+  </div>
+</section>
+
+<section id="operadoras" class="operadoras-section">
+  <div class="operadoras-wrap">
+    <h2 class="operadoras-titulo">Operadores mayoristas con los que trabajamos</h2>
+    <p class="operadoras-sub">Accedemos a tarifas y productos de las principales mayoristas del país.</p>
+    <div class="operadoras-logos">
+      <img src="assets/operadoras/delfos-tour.png" alt="Delfos Tour" loading="lazy">
+      <img src="assets/operadoras/el-viaje-de-tu-vida.png" alt="El Viaje de tu Vida" loading="lazy">
+      <img src="assets/operadoras/ola-mayorista.png" alt="Ola Mayorista de Turismo" loading="lazy">
+      <img src="assets/operadoras/del-valle-turismo.png" alt="Del Valle Turismo" loading="lazy">
     </div>
   </div>
 </section>
@@ -115,8 +293,13 @@
 </a>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase-config.js"></script>
-<script src="js/catalogo.js"></script>
+<script src="js/supabase-config.js?v=20260609"></script>
+<script src="js/catalogo-util.js?v=20260615"></script>
+<script src="js/catalogo.js?v=20260615"></script>
+<script src="js/asistente.js?v=20260615"></script>
+<script src="js/calendario.js?v=20260615"></script>
+<script src="js/alertas.js?v=20260615"></script>
+<script src="js/cotizar.js?v=20260613"></script>
 <script>
   const wa = 'https://wa.me/' + (window.OLALA_WHATSAPP || '5493743483429');
   const msg = '?text=' + encodeURIComponent('Hola! Quiero consultar sobre los paquetes de Olalá Viajes.');
@@ -128,6 +311,33 @@
   if (mail) { mail.href = 'mailto:' + (window.OLALA_EMAIL || ''); mail.textContent = '📧 ' + (window.OLALA_EMAIL || ''); }
   const panel = document.getElementById('panel-link');
   if (panel) panel.href = window.OLALA_PANEL_URL || '#';
+
+  const ham = document.getElementById('hamburger');
+  const menu = document.getElementById('mobile-menu');
+  if (ham && menu) {
+    const cerrar = () => { ham.classList.remove('open'); menu.classList.remove('open'); document.body.style.overflow = ''; };
+    ham.addEventListener('click', () => {
+      const abrir = !menu.classList.contains('open');
+      ham.classList.toggle('open', abrir);
+      menu.classList.toggle('open', abrir);
+      document.body.style.overflow = abrir ? 'hidden' : '';
+    });
+    menu.querySelectorAll('a').forEach((a) => a.addEventListener('click', cerrar));
+  }
+
+  const vistaLista = document.getElementById('vista-lista');
+  const vistaCal = document.getElementById('vista-calendario');
+  const panelLista = document.getElementById('vista-lista-panel');
+  const panelCal = document.getElementById('vista-calendario-panel');
+  function setVista(v) {
+    const esLista = v === 'lista';
+    vistaLista?.classList.toggle('active', esLista);
+    vistaCal?.classList.toggle('active', !esLista);
+    if (panelLista) panelLista.hidden = !esLista;
+    if (panelCal) panelCal.hidden = esLista;
+  }
+  vistaLista?.addEventListener('click', () => setVista('lista'));
+  vistaCal?.addEventListener('click', () => setVista('calendario'));
 </script>
 </body>
 </html>

@@ -64,6 +64,8 @@ urlpatterns = [
     path('web/paquete/<int:pk>/', views.web_publica_paquete, name='web_publica_paquete'),
     path('web/flyer/<int:pk>/', views.web_publica_flyer, name='web_publica_flyer'),
     path('web/og-catalogo.jpg', views.web_og_catalogo, name='web_og_catalogo'),
+    path('web/cotizar/', views.web_cotizacion, name='web_cotizacion'),
+    path('web/alerta/', views.web_alerta, name='web_alerta'),
 
     # Salidas
     path('salidas/', login_required(views.salidas_lista), name='salidas_lista'),

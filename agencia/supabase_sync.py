@@ -1,5 +1,6 @@
-"""Sincroniza salidas y fotos con Supabase (catálogo público en Firebase/Netlify)."""
+"""Sincroniza salidas con Supabase (rápido: omite archivos ya subidos)."""
 
+import hashlib
 import json
 import mimetypes
 import os
@@ -14,41 +15,107 @@ from .salidas_utils import categorizar_salida
 BUCKET = 'olala-salidas'
 TABLE = 'olala_salidas'
 VERIFY = certifi.where()
-TIMEOUT = 120
+TIMEOUT_SUBIDA = 90
+TIMEOUT_HEAD = 8
+
+_HTTP = None
+_CACHE_REMOTO = None
 
 
 def supabase_configurado():
     return bool(getattr(settings, 'USE_SUPABASE', False))
 
 
-def _session():
-    s = requests.Session()
-    key = settings.SUPABASE_SERVICE_KEY
-    s.headers.update({
-        'apikey': key,
-        'Authorization': f'Bearer {key}',
-    })
-    return s
+def _get_session():
+    global _HTTP
+    if _HTTP is None:
+        s = requests.Session()
+        key = settings.SUPABASE_SERVICE_KEY
+        s.headers.update({
+            'apikey': key,
+            'Authorization': f'Bearer {key}',
+        })
+        _HTTP = s
+    return _HTTP
+
+
+def _base():
+    return settings.SUPABASE_URL.rstrip('/')
+
+
+def _public_url(object_path):
+    return f'{_base()}/storage/v1/object/public/{BUCKET}/{object_path}'
+
+
+def _existe_en_storage(object_path):
+    try:
+        r = _get_session().head(_public_url(object_path), timeout=TIMEOUT_HEAD, verify=VERIFY)
+        return r.status_code == 200
+    except requests.RequestException:
+        return False
 
 
 def _request(method, path, data=None, extra_headers=None):
-    url = f'{settings.SUPABASE_URL.rstrip("/")}{path}'
-    headers = extra_headers or {}
+    url = f'{_base()}{path}'
+    headers = dict(extra_headers or {})
+    body = None
     if data is not None:
         headers['Content-Type'] = 'application/json'
-    resp = _session().request(
-        method,
-        url,
-        headers=headers,
-        data=json.dumps(data, ensure_ascii=False).encode('utf-8') if data is not None else None,
-        timeout=TIMEOUT,
-        verify=VERIFY,
-    )
+        body = json.dumps(data, ensure_ascii=False).encode('utf-8')
+    resp = _get_session().request(method, url, headers=headers, data=body, timeout=30, verify=VERIFY)
     if resp.status_code >= 400:
         raise RuntimeError(f'Supabase {method} {path} → {resp.status_code}: {resp.text[:400]}')
     if resp.text:
         return resp.json()
     return None
+
+
+def _cargar_cache_remoto():
+    global _CACHE_REMOTO
+    if _CACHE_REMOTO is not None:
+        return _CACHE_REMOTO
+    try:
+        rows = _request('GET', f'/rest/v1/{TABLE}?select=id,imagen_url,flyer_url') or []
+        _CACHE_REMOTO = {int(r['id']): r for r in rows}
+    except Exception:
+        _CACHE_REMOTO = {}
+    return _CACHE_REMOTO
+
+
+def _hash_salida(salida):
+    partes = [
+        salida.nombre_paquete,
+        str(salida.fecha_salida),
+        salida.lugar_salida or '',
+        salida.descripcion or '',
+        salida.servicios_incluidos or '',
+        str(salida.precio),
+        salida.moneda or '',
+        str(salida.cupos),
+        str(salida.agotado),
+        str(salida.pasa_por_jardin_america),
+        str(salida.vacaciones_invierno),
+        str(getattr(salida, 'salida_confirmada', False)),
+        json.dumps(salida.get_categorias_slugs(), sort_keys=True),
+        os.path.basename(salida.foto.name) if salida.foto else '',
+    ]
+    return hashlib.md5('|'.join(partes).encode('utf-8')).hexdigest()
+
+
+def _stamp_path(salida):
+    return Path(settings.MEDIA_ROOT) / 'flyers' / f'{salida.pk}.sync'
+
+
+def _salida_cambio(salida):
+    stamp = _stamp_path(salida)
+    h = _hash_salida(salida)
+    if stamp.exists() and stamp.read_text(encoding='utf-8').strip() == h:
+        return False
+    return True
+
+
+def _marcar_sincronizada(salida):
+    _stamp_path(salida).write_text(_hash_salida(salida), encoding='utf-8')
 
 
 def _buscar_foto_local(salida):
@@ -65,67 +132,141 @@ def _buscar_foto_local(salida):
     return None
 
 
-def _leer_bytes_foto(salida):
+def _url_foto_existente(salida):
     if not salida.foto:
-        return None, None
-    try:
-        with salida.foto.open('rb') as f:
-            return f.read(), os.path.basename(salida.foto.name)
-    except Exception:
-        pass
-    local = _buscar_foto_local(salida)
-    if local:
-        return local.read_bytes(), local.name
+        return ''
+    remoto = _cargar_cache_remoto().get(salida.pk, {})
+    if remoto.get('imagen_url'):
+        return remoto['imagen_url']
     try:
         url = salida.foto.url
         if url.startswith(('http://', 'https://')):
-            r = requests.get(url, timeout=60, verify=VERIFY)
-            r.raise_for_status()
-            return r.content, os.path.basename(salida.foto.name)
+            return url
     except Exception:
         pass
-    return None, None
+    nombre = os.path.basename(salida.foto.name)
+    object_path = f'{salida.pk}/{nombre}'
+    if _existe_en_storage(object_path):
+        return _public_url(object_path)
+    return ''
 
 
-def _subir_bytes_storage(object_path, contenido, mime='image/jpeg'):
-    url = (
-        f'{settings.SUPABASE_URL.rstrip("/")}/storage/v1/object/'
-        f'{BUCKET}/{object_path}'
-    )
-    resp = _session().post(
+def imagen_og_salida(salida):
+    """URL absoluta HTTPS de la foto del paquete."""
+    url = _url_foto_existente(salida)
+    if url.startswith(('http://', 'https://')):
+        return url
+    from .web_publish import url_imagen_absoluta
+
+    base = getattr(settings, 'PUBLIC_WEB_BASE_URL', 'https://olala-viajes.web.app')
+    abs_url = url_imagen_absoluta(salida, base)
+    if abs_url.startswith(('http://', 'https://')):
+        return abs_url
+    return f'{base.rstrip("/")}/assets/og-catalogo.jpg'
+
+
+def _formato_og_compatible(url):
+    if not url:
+        return False
+    low = url.lower().split('?')[0]
+    return low.endswith(('.jpg', '.jpeg', '.png', '.webp', '.gif'))
+
+
+def imagen_og_compartir(salida, imagen_url='', flyer_url=''):
+    """Imagen para WhatsApp/Facebook (JPG/PNG/WebP; evita AVIF/JFIF)."""
+    base = getattr(settings, 'PUBLIC_WEB_BASE_URL', 'https://olala-viajes.web.app').rstrip('/')
+    foto = imagen_url or imagen_og_salida(salida)
+    flyer = flyer_url or _url_flyer_existente(salida)
+    if not flyer:
+        flyer = (_cargar_cache_remoto().get(salida.pk) or {}).get('flyer_url', '')
+    if not flyer and _existe_en_storage(f'{salida.pk}/flyer.jpg'):
+        flyer = _public_url(f'{salida.pk}/flyer.jpg')
+
+    if _formato_og_compatible(foto):
+        return foto
+    if flyer and flyer.startswith(('http://', 'https://')):
+        return flyer
+    if foto.startswith(('http://', 'https://')):
+        return foto
+    return f'{base}/assets/og-catalogo.jpg'
+
+
+def _subir_foto_si_falta(salida):
+    existente = _url_foto_existente(salida)
+    if existente:
+        return existente
+
+    if not salida.foto:
+        return ''
+
+    nombre = os.path.basename(salida.foto.name)
+    object_path = f'{salida.pk}/{nombre}'
+    contenido = None
+
+    local = _buscar_foto_local(salida)
+    if local:
+        contenido = local.read_bytes()
+    else:
+        try:
+            with salida.foto.open('rb') as f:
+                contenido = f.read()
+        except Exception:
+            pass
+
+    if not contenido:
+        return existente
+
+    mime = mimetypes.guess_type(nombre)[0] or 'application/octet-stream'
+    url = f'{_base()}/storage/v1/object/{BUCKET}/{object_path}'
+    resp = _get_session().post(
         url,
         data=contenido,
         headers={'Content-Type': mime, 'x-upsert': 'true'},
-        timeout=TIMEOUT,
+        timeout=TIMEOUT_SUBIDA,
         verify=VERIFY,
     )
     if resp.status_code not in (200, 201, 400, 409):
-        raise RuntimeError(f'No se pudo subir archivo: {resp.status_code} {resp.text[:300]}')
-    return (
-        f'{settings.SUPABASE_URL.rstrip("/")}/storage/v1/object/public/'
-        f'{BUCKET}/{object_path}'
-    )
+        raise RuntimeError(f'Foto: {resp.status_code} {resp.text[:200]}')
+    return _public_url(object_path)
 
 
-def _subir_foto_storage(salida):
-    contenido, nombre = _leer_bytes_foto(salida)
-    if not contenido or not nombre:
-        return ''
-
-    object_path = f'{salida.pk}/{nombre}'
-    mime = mimetypes.guess_type(nombre)[0] or 'application/octet-stream'
-    return _subir_bytes_storage(object_path, contenido, mime)
+def _url_flyer_existente(salida):
+    object_path = f'{salida.pk}/flyer.jpg'
+    if _existe_en_storage(object_path):
+        return _public_url(object_path)
+    remoto = _cargar_cache_remoto().get(salida.pk, {})
+    return remoto.get('flyer_url') or ''
 
 
-def _subir_flyer_storage(salida):
+def _subir_flyer_si_falta(salida, forzar=False):
+    existente = _url_flyer_existente(salida)
+    if existente and not forzar and not _salida_cambio(salida):
+        return existente
+
     from .flyer_utils import generar_flyer_salida
 
     categorizar_salida(salida)
     ruta = Path(settings.MEDIA_ROOT) / 'flyers' / f'{salida.pk}.jpg'
     ruta.parent.mkdir(parents=True, exist_ok=True)
-    if not ruta.exists() or ruta.stat().st_size == 0:
+
+    if forzar or _salida_cambio(salida) or not ruta.exists() or ruta.stat().st_size == 0:
         generar_flyer_salida(salida, ruta)
-    return _subir_bytes_storage(f'{salida.pk}/flyer.jpg', ruta.read_bytes(), 'image/jpeg')
+
+    if existente and not forzar and not _salida_cambio(salida):
+        return existente
+
+    object_path = f'{salida.pk}/flyer.jpg'
+    url = f'{_base()}/storage/v1/object/{BUCKET}/{object_path}'
+    resp = _get_session().post(
+        url,
+        data=ruta.read_bytes(),
+        headers={'Content-Type': 'image/jpeg', 'x-upsert': 'true'},
+        timeout=TIMEOUT_SUBIDA,
+        verify=VERIFY,
+    )
+    if resp.status_code not in (200, 201, 400, 409):
+        raise RuntimeError(f'Flyer: {resp.status_code} {resp.text[:200]}')
+    return _public_url(object_path)
 
 
 def _payload_salida(salida, imagen_url='', flyer_url=''):
@@ -147,6 +288,7 @@ def _payload_salida(salida, imagen_url='', flyer_url=''):
         'moneda': salida.moneda or 'ARS',
         'cupos': salida.cupos,
         'agotado': bool(salida.agotado),
+        'salida_confirmada': bool(getattr(salida, 'salida_confirmada', False)),
         'pasa_por_jardin_america': bool(salida.pasa_por_jardin_america),
         'vacaciones_invierno': bool(salida.vacaciones_invierno),
         'categorias': salida.get_categorias_slugs(),
@@ -159,19 +301,25 @@ def _payload_salida(salida, imagen_url='', flyer_url=''):
     }
 
 
-def sincronizar_salida(salida):
+def sincronizar_salida(salida, forzar_flyers=False, rapido=False, progreso=None):
     if not supabase_configurado():
-        return False, 'Supabase no configurado (SUPABASE_URL + SUPABASE_SERVICE_KEY en .env)'
+        return False, 'Supabase no configurado'
 
-    imagen_url = ''
-    if salida.foto:
-        imagen_url = _subir_foto_storage(salida)
+    remoto = _cargar_cache_remoto().get(salida.pk)
+    if remoto and not forzar_flyers and not _salida_cambio(salida):
+        if progreso:
+            progreso(salida)
+        return True, 'sin cambios'
 
+    imagen_url = _subir_foto_si_falta(salida)
     flyer_url = ''
-    try:
-        flyer_url = _subir_flyer_storage(salida)
-    except Exception:
-        pass
+    if not rapido:
+        try:
+            flyer_url = _subir_flyer_si_falta(salida, forzar=forzar_flyers)
+        except Exception:
+            flyer_url = _url_flyer_existente(salida)
+    else:
+        flyer_url = _url_flyer_existente(salida)
 
     payload = _payload_salida(salida, imagen_url=imagen_url, flyer_url=flyer_url)
     _request(
@@ -180,7 +328,27 @@ def sincronizar_salida(salida):
         data=payload,
         extra_headers={'Prefer': 'resolution=merge-duplicates'},
     )
-    return True, imagen_url or 'sin foto'
+    _marcar_sincronizada(salida)
+    if remoto is not None:
+        remoto.update({'imagen_url': imagen_url, 'flyer_url': flyer_url})
+
+    try:
+        from .alertas import verificar_alertas_para_salida
+        verificar_alertas_para_salida(payload)
+    except Exception:
+        pass
+
+    from .sitio_estatico import generar_paginas_paquetes
+
+    img_og = imagen_og_compartir(salida, imagen_url=imagen_url, flyer_url=flyer_url)
+    try:
+        generar_paginas_paquetes([salida], {salida.pk: img_og})
+    except Exception:
+        pass
+
+    if progreso:
+        progreso(salida)
+    return True, 'ok'
 
 
 def ocultar_salida(pk):
@@ -189,21 +357,44 @@ def ocultar_salida(pk):
     _request('PATCH', f'/rest/v1/{TABLE}?id=eq.{pk}', data={'visible': False})
 
 
-def sincronizar_todas_las_salidas():
+def sincronizar_todas_las_salidas(forzar_flyers=False, callback=None):
     if not supabase_configurado():
         raise RuntimeError('Configurá SUPABASE_URL y SUPABASE_SERVICE_KEY en .env')
 
     from .models import Salida
 
+    salidas = list(Salida.objects.select_related('operadora').order_by('fecha_salida'))
+    total = len(salidas)
+    _cargar_cache_remoto()
+
     ok = 0
+    sin_cambios = 0
     errores = []
-    for salida in Salida.objects.select_related('operadora').order_by('fecha_salida'):
+    for i, salida in enumerate(salidas, start=1):
+        if callback:
+            callback(i, total, salida.nombre_paquete)
         try:
-            sincronizar_salida(salida)
+            _, estado = sincronizar_salida(salida, forzar_flyers=forzar_flyers)
             ok += 1
+            if estado == 'sin cambios':
+                sin_cambios += 1
         except Exception as exc:
             errores.append(f'{salida.nombre_paquete}: {exc}')
 
+    from .sitio_estatico import asegurar_assets_sitio, generar_paginas_paquetes
+
+    imagenes = {}
+    for salida in salidas:
+        remoto = _cargar_cache_remoto().get(salida.pk, {})
+        imagenes[salida.pk] = imagen_og_compartir(
+            salida,
+            imagen_url=remoto.get('imagen_url', ''),
+            flyer_url=remoto.get('flyer_url', ''),
+        )
+
+    asegurar_assets_sitio()
+    generar_paginas_paquetes(salidas, imagenes)
+
     if errores:
-        raise RuntimeError(f'Sincronizadas {ok}, con error {len(errores)}: {errores[0]}')
-    return ok
+        raise RuntimeError(f'Sincronizadas {ok}/{total}, error: {errores[0]}')
+    return ok, sin_cambios

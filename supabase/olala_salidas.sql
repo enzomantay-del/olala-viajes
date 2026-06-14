@@ -26,6 +26,7 @@ create table if not exists public.olala_salidas (
 );
 
 alter table public.olala_salidas add column if not exists flyer_url text default '';
+alter table public.olala_salidas add column if not exists salida_confirmada boolean default false;
 
 alter table public.olala_salidas enable row level security;
 

@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.http import HttpResponse, FileResponse
+from django.views.decorators.csrf import csrf_exempt
 from pathlib import Path
 from django.utils import timezone
 from django.db.models import Sum, Q
@@ -739,6 +740,95 @@ def web_og_catalogo(request):
     return FileResponse(ruta.open('rb'), content_type='image/jpeg')
 
 
+def _cors_web_publica(response, request):
+    origen = request.headers.get('Origin', '')
+    permitidos = {
+        django_settings.PUBLIC_WEB_BASE_URL.rstrip('/'),
+        'https://olala-viajes.web.app',
+        'http://127.0.0.1:5500',
+        'http://localhost:5500',
+    }
+    if origen in permitidos or origen.endswith('.web.app'):
+        response['Access-Control-Allow-Origin'] = origen
+    response['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+    response['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
+
+
+def _cors_cotizacion_response(response, request):
+    return _cors_web_publica(response, request)
+
+
+@csrf_exempt
+def web_cotizacion(request):
+    """Recibe solicitudes de cotización desde el catálogo público (Firebase)."""
+    import json as _json
+
+    from django.http import JsonResponse
+
+    from .cotizaciones import procesar_cotizacion
+
+    if request.method == 'OPTIONS':
+        return _cors_cotizacion_response(HttpResponse(status=204), request)
+
+    if request.method != 'POST':
+        resp = JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
+        return _cors_cotizacion_response(resp, request)
+    try:
+        data = _json.loads(request.body.decode('utf-8'))
+    except _json.JSONDecodeError:
+        resp = JsonResponse({'ok': False, 'error': 'Datos inválidos'}, status=400)
+        return _cors_cotizacion_response(resp, request)
+    try:
+        resultado = procesar_cotizacion(data)
+        resp = JsonResponse(resultado)
+        return _cors_cotizacion_response(resp, request)
+    except ValueError as exc:
+        resp = JsonResponse({'ok': False, 'error': str(exc)}, status=400)
+        return _cors_cotizacion_response(resp, request)
+    except Exception:
+        resp = JsonResponse(
+            {'ok': False, 'error': 'No pudimos enviar la solicitud. Escribinos por WhatsApp.'},
+            status=500,
+        )
+        return _cors_cotizacion_response(resp, request)
+
+
+@csrf_exempt
+def web_alerta(request):
+    """Recibe alertas de destino desde el catálogo público (Firebase)."""
+    import json as _json
+
+    from django.http import JsonResponse
+
+    from .alertas import procesar_alerta
+
+    if request.method == 'OPTIONS':
+        return _cors_web_publica(HttpResponse(status=204), request)
+
+    if request.method != 'POST':
+        resp = JsonResponse({'ok': False, 'error': 'Método no permitido'}, status=405)
+        return _cors_web_publica(resp, request)
+    try:
+        data = _json.loads(request.body.decode('utf-8'))
+    except _json.JSONDecodeError:
+        resp = JsonResponse({'ok': False, 'error': 'Datos inválidos'}, status=400)
+        return _cors_web_publica(resp, request)
+    try:
+        resultado = procesar_alerta(data)
+        resp = JsonResponse(resultado)
+        return _cors_web_publica(resp, request)
+    except ValueError as exc:
+        resp = JsonResponse({'ok': False, 'error': str(exc)}, status=400)
+        return _cors_web_publica(resp, request)
+    except Exception:
+        resp = JsonResponse(
+            {'ok': False, 'error': 'No pudimos registrar la alerta. Escribinos por WhatsApp.'},
+            status=500,
+        )
+        return _cors_web_publica(resp, request)
+
+
 def salida_eliminar(request, pk):
     salida = get_object_or_404(Salida, pk=pk)
     if request.method == 'POST':
@@ -831,13 +921,14 @@ def publicar_web(request):
         return redirect('salidas_lista')
 
     try:
-        n = sincronizar_todas_las_salidas()
+        n, omitidas = sincronizar_todas_las_salidas()
     except Exception as exc:
         messages.error(request, f'Error al sincronizar: {exc}')
         return redirect('salidas_lista')
 
     web_url = django_settings.PUBLIC_WEB_BASE_URL.rstrip('/') + '/'
-    messages.success(request, f'{n} paquetes en Supabase. Catálogo: {web_url}')
+    extra = f' ({omitidas} sin cambios)' if omitidas else ''
+    messages.success(request, f'{n} paquetes en Supabase{extra}. Catálogo: {web_url}')
     return redirect('salidas_lista')
 
 

@@ -1,11 +1,9 @@
 (function () {
   'use strict';
 
-  const MESES = [
-    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
-  ];
-  const SIMBOLO = { ARS: '$', USD: 'U$S', BRL: 'R$' };
+  const U = window.OlalaUtil;
+  const MESES = U.MESES;
+  const SIMBOLO = U.SIMBOLO;
   const WA = window.OLALA_WHATSAPP || '5493743483429';
   const BASE = window.location.origin;
   const PANEL_FLYER = (window.OLALA_PANEL_URL || 'https://olala-viajes.onrender.com').replace(/\/accounts\/login\/?$/, '');
@@ -16,30 +14,16 @@
   const SVG_COPY = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>';
   const SVG_FLYER = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-4-8l-4 4-4-4h3V7h2v4h3z"/></svg>';
 
-  function escapeHtml(str) {
-    return String(str || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
-  function fechaLegible(iso) {
-    if (!iso) return '';
-    const p = iso.split('-');
-    const d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
-    return `${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`;
-  }
-
-  function hoyIso() {
-    const d = new Date();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${d.getFullYear()}-${m}-${day}`;
-  }
+  function escapeHtml(str) { return U.escapeHtml(str); }
+  function fechaLegible(iso) { return U.fechaLegible(iso); }
+  function hoyIso() { return U.hoyIso(); }
 
   function paqueteUrl(id) {
     return `${BASE}/paquete.html?id=${id}`;
+  }
+
+  function paqueteShareUrl(id) {
+    return `${BASE}/paquete/${id}.html`;
   }
 
   function flyerUrl(s) {
@@ -84,7 +68,7 @@
 
   function shareHtml(s) {
     const payload = encodeURIComponent(JSON.stringify({
-      url: paqueteUrl(s.id),
+      url: paqueteShareUrl(s.id),
       text: mensajeWhatsapp(s),
       title: s.nombre_paquete,
     }));
@@ -111,15 +95,9 @@
     const precio = s.precio
       ? `<div class="paq-precio"><div class="paq-precio-desde">desde</div><div class="paq-precio-valor">${SIMBOLO[s.moneda] || ''} ${Number(s.precio).toLocaleString('es-AR')}</div><div class="paq-precio-moneda">por persona · ${escapeHtml(s.moneda)}</div></div>`
       : '<div></div>';
-    const cuposBadge = s.agotado
-      ? '<div class="paq-agotado-overlay"><span class="paq-agotado-texto">¡AGOTADO!</span></div>'
-      : s.cupos
-        ? (s.cupos < 10
-          ? `<span class="paq-badge-urgente">¡Últimos ${s.cupos} lugares!</span>`
-          : `<span class="paq-badge-lugares">${s.cupos} lugares</span>`)
-        : '';
+    const cuposBadge = U.badgesUrgenciaHtml(s);
     return `
-      <div class="paq-card fade${s.agotado ? ' agotado' : ''}" data-cats="${escapeHtml(cats)}">
+      <div class="paq-card fade${s.agotado ? ' agotado' : ''}" data-cats="${escapeHtml(cats)}" data-id="${s.id}">
         <div class="paq-visual cat-${escapeHtml(cat)}">
           ${img}
           ${s.pasa_por_jardin_america ? '<span class="paq-badge-ja">Pasa por Jardín América</span>' : ''}
@@ -147,6 +125,8 @@
   }
 
   function filtrar(cat, btn) {
+    window.OLALA_FILTRO_ACTIVO = cat;
+    document.dispatchEvent(new CustomEvent('olala:filtro', { detail: cat }));
     document.querySelectorAll('.filtro-btn').forEach((b) => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
     let visible = 0;
@@ -246,6 +226,7 @@
       return;
     }
     const salidas = data || [];
+    window.OLALA_SALIDAS = salidas;
     if (loading) loading.remove();
     document.getElementById('stat-salidas').textContent = String(salidas.length);
     if (grilla) {
@@ -253,10 +234,12 @@
       bindCards();
       filtrar('todos', document.querySelector('.filtro-btn.active'));
     }
+    document.dispatchEvent(new CustomEvent('olala:salidas-cargadas', { detail: salidas }));
     const shareBtn = document.getElementById('btn-compartir-catalogo');
     if (shareBtn) {
       shareBtn.addEventListener('click', () => {
-        const texto = `✈️ *Olalá Viajes*\n\nIngresá y conocé todos los paquetes 👇\n\n${BASE}/`;
+        const link = `${BASE}/compartir-catalogo.html`;
+        const texto = `${link}\n\n✈️ *Olalá Viajes*\nIngresá y conocé todas las salidas grupales que tenemos para vos`;
         window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
       });
     }

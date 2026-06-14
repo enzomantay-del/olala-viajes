@@ -13,11 +13,34 @@
     .detalle-meta { color: #64748b; margin-bottom: 16px; }
     .detalle ul { margin: 12px 0 20px 20px; }
     .btn-volver { display: inline-block; margin-bottom: 20px; color: #0e7490; font-weight: 600; }
+    .detalle-cta {
+      margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--borde);
+      display: flex; flex-direction: column; align-items: flex-start; gap: 20px;
+    }
+    .detalle-precio-desde { font-size: .85rem; color: var(--texto-s); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+    .detalle-precio-valor { font-size: clamp(2rem, 6vw, 2.75rem); font-weight: 800; color: var(--teal); line-height: 1.1; }
+    .detalle-precio-moneda { font-size: .9rem; color: var(--texto-s); margin-top: 6px; }
+    .detalle-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .detalle-badge { font-size: .78rem; font-weight: 700; padding: 6px 12px; border-radius: 8px; color: white; }
+    .detalle-badge.confirmada { background: #059669; }
+    .detalle-badge.urgente { background: #ef4444; }
+    .detalle-badge.plazo { background: #d97706; }
+    .detalle-badge.agotado { background: #b91c1c; }
+    .btn-consultar-detalle {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: #25D366; color: white; font-family: 'Poppins', sans-serif;
+      font-size: 1rem; font-weight: 700; padding: 14px 28px; border-radius: 10px;
+      text-decoration: none; width: 100%; max-width: 320px;
+    }
+    @media (min-width: 520px) {
+      .detalle-cta { flex-direction: row; align-items: center; justify-content: space-between; gap: 32px; }
+      .btn-consultar-detalle { width: auto; }
+    }
   </style>
 </head>
 <body>
   <nav class="navbar">
-    <a href="index.html"><img src="assets/logo-olala.png" alt="Olalá Viajes" class="nav-logo"></a>
+    <a href="index.html"><img src="assets/logo-blanco.png" alt="Olalá Viajes" class="nav-logo"></a>
   </nav>
   <main class="detalle" id="contenido">
     <a href="index.html" class="btn-volver">← Todos los paquetes</a>
@@ -25,31 +48,72 @@
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
+  <script src="js/catalogo-util.js"></script>
   <script>
-    (async function () {
-      const id = new URLSearchParams(location.search).get('id');
-      const root = document.getElementById('contenido');
-      if (!id) { root.innerHTML = '<p>Paquete no encontrado.</p>'; return; }
-      const client = window.getSupabaseClient();
-      const { data, error } = await client.from('olala_salidas').select('*').eq('id', id).maybeSingle();
-      if (error || !data) { root.innerHTML = '<p>No se encontró el paquete.</p>'; return; }
-      const s = data;
-      const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-      const p = s.fecha_salida.split('-');
-      const fecha = `${Number(p[2])} de ${MESES[Number(p[1])-1]} de ${p[0]}`;
-      const sim = { ARS: '$', USD: 'U$S', BRL: 'R$' }[s.moneda] || s.moneda;
-      const servicios = (s.servicios_incluidos || '').split('\n').filter(l => l.trim()).map(l => `<li>${l.trim()}</li>`).join('');
-      root.innerHTML = `
-        <a href="index.html" class="btn-volver">← Todos los paquetes</a>
-        ${s.imagen_url ? `<img src="${s.imagen_url}" alt="${s.nombre_paquete}">` : ''}
-        <h1>${s.nombre_paquete}</h1>
-        <div class="detalle-meta">📅 ${fecha} · 📍 ${s.lugar_salida || ''}</div>
-        ${s.descripcion ? `<p>${s.descripcion}</p>` : ''}
-        ${servicios ? `<h3>Incluye</h3><ul>${servicios}</ul>` : ''}
-        ${s.precio ? `<p><strong>Desde ${sim} ${Number(s.precio).toLocaleString('es-AR')}</strong> (${s.moneda})</p>` : ''}
-        <a class="btn-naranja" href="https://wa.me/${window.OLALA_WHATSAPP}?text=${encodeURIComponent('Hola! Consulto por ' + s.nombre_paquete)}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
-      `;
-      document.title = s.nombre_paquete + ' | Olalá Viajes';
+    (function () {
+      function paqueteId() {
+        const m = location.pathname.match(/\/paquete\/(\d+)\.html$/);
+        if (m) return m[1];
+        return new URLSearchParams(location.search).get('id');
+      }
+
+      (async function () {
+        const id = paqueteId();
+        const root = document.getElementById('contenido');
+        if (!id) {
+          root.innerHTML = '<a href="index.html" class="btn-volver">← Todos los paquetes</a><p>Paquete no encontrado.</p>';
+          return;
+        }
+        const client = window.getSupabaseClient && window.getSupabaseClient();
+        if (!client) {
+          root.innerHTML = '<p>Error de configuración.</p>';
+          return;
+        }
+        const { data, error } = await client.from('olala_salidas').select('*').eq('id', id).maybeSingle();
+        if (error || !data) {
+          root.innerHTML = '<a href="index.html" class="btn-volver">← Todos los paquetes</a><p>No se encontró el paquete.</p>';
+          return;
+        }
+        const s = data;
+        const U = window.OlalaUtil;
+        const MESES = U.MESES;
+        const p = s.fecha_salida.split('-');
+        const fecha = `${Number(p[2])} de ${MESES[Number(p[1]) - 1]} de ${p[0]}`;
+        const sim = U.SIMBOLO[s.moneda] || s.moneda;
+        const servicios = (s.servicios_incluidos || '').split('\n').filter((l) => l.trim()).map((l) => `<li>${l.trim()}</li>`).join('');
+        const wa = window.OLALA_WHATSAPP || '5493743483429';
+        const badges = [];
+        if (s.agotado) badges.push('<span class="detalle-badge agotado">¡AGOTADO!</span>');
+        if (s.salida_confirmada && !s.agotado) badges.push('<span class="detalle-badge confirmada">✓ Salida confirmada</span>');
+        const dias = U.diasHasta(s.fecha_salida);
+        if (!s.agotado && dias !== null && dias >= 0 && dias <= 14) {
+          const txt = dias === 0 ? '¡Sale hoy!' : dias === 1 ? '¡Sale mañana!' : `¡${dias} días para reservar!`;
+          badges.push(`<span class="detalle-badge plazo">${txt}</span>`);
+        }
+        if (!s.agotado && s.cupos != null && s.cupos > 0 && s.cupos <= 10) {
+          badges.push(`<span class="detalle-badge urgente">¡Quedan ${s.cupos} lugares!</span>`);
+        }
+        const badgesHtml = badges.length ? `<div class="detalle-badges">${badges.join('')}</div>` : '';
+        root.innerHTML = `
+          <a href="index.html" class="btn-volver">← Todos los paquetes</a>
+          ${s.imagen_url ? `<img src="${s.imagen_url}" alt="${s.nombre_paquete}">` : ''}
+          <h1>${s.nombre_paquete}</h1>
+          ${badgesHtml}
+          <div class="detalle-meta">📅 ${fecha}${s.lugar_salida ? ' · 📍 ' + s.lugar_salida : ''}</div>
+          ${s.descripcion ? `<p>${s.descripcion}</p>` : ''}
+          ${servicios ? `<h3>Incluye</h3><ul>${servicios}</ul>` : ''}
+          <div class="detalle-cta">
+            ${s.precio ? `
+            <div class="detalle-precio">
+              <div class="detalle-precio-desde">desde</div>
+              <div class="detalle-precio-valor">${sim} ${Number(s.precio).toLocaleString('es-AR')}</div>
+              <div class="detalle-precio-moneda">por persona · ${s.moneda}</div>
+            </div>` : '<div></div>'}
+            <a class="btn-consultar-detalle" href="https://wa.me/${wa}?text=${encodeURIComponent('Hola! Consulto por ' + s.nombre_paquete)}" target="_blank" rel="noopener">Consultar por WhatsApp</a>
+          </div>
+        `;
+        document.title = s.nombre_paquete + ' | Olalá Viajes';
+      })();
     })();
   </script>
 </body>
