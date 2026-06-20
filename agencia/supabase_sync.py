@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import logging
 import mimetypes
 import os
 from pathlib import Path
@@ -20,6 +21,7 @@ TIMEOUT_HEAD = 8
 
 _HTTP = None
 _CACHE_REMOTO = None
+_log = logging.getLogger(__name__)
 
 
 def supabase_configurado():
@@ -238,6 +240,11 @@ def _url_flyer_existente(salida):
     return remoto.get('flyer_url') or ''
 
 
+def _flyer_falta(salida):
+    """True si el paquete aún no tiene flyer en Storage ni URL en Supabase."""
+    return not _url_flyer_existente(salida)
+
+
 def _subir_flyer_si_falta(salida, forzar=False):
     existente = _url_flyer_existente(salida)
     if existente and not forzar and not _salida_cambio(salida):
@@ -306,17 +313,24 @@ def sincronizar_salida(salida, forzar_flyers=False, rapido=False, progreso=None)
         return False, 'Supabase no configurado'
 
     remoto = _cargar_cache_remoto().get(salida.pk)
-    if remoto and not forzar_flyers and not _salida_cambio(salida):
+    if remoto and not forzar_flyers and not _salida_cambio(salida) and not _flyer_falta(salida):
         if progreso:
             progreso(salida)
         return True, 'sin cambios'
 
     imagen_url = _subir_foto_si_falta(salida)
     flyer_url = ''
-    if not rapido:
+    generar_flyer = (
+        not rapido
+        or forzar_flyers
+        or _salida_cambio(salida)
+        or _flyer_falta(salida)
+    )
+    if generar_flyer:
         try:
             flyer_url = _subir_flyer_si_falta(salida, forzar=forzar_flyers)
-        except Exception:
+        except Exception as exc:
+            _log.warning('Flyer salida %s: %s', salida.pk, exc)
             flyer_url = _url_flyer_existente(salida)
     else:
         flyer_url = _url_flyer_existente(salida)
