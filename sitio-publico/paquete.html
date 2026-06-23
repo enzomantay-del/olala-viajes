@@ -46,6 +46,14 @@
     <a href="index.html" class="btn-volver">← Todos los paquetes</a>
     <p>Cargando paquete…</p>
   </main>
+
+  <div class="aviso-popup" id="aviso-popup" hidden aria-modal="true" role="dialog">
+    <div class="aviso-popup-box">
+      <button type="button" class="aviso-popup-close" id="aviso-popup-cerrar" aria-label="Cerrar">×</button>
+      <div id="aviso-popup-contenido"></div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/catalogo-util.js"></script>
@@ -113,8 +121,42 @@
           </div>
         `;
         document.title = s.nombre_paquete + ' | Olalá Viajes';
+
+        const { data: testis } = await client
+          .from('olala_testimonios')
+          .select('*')
+          .eq('visible', true)
+          .or(`salida_id.eq.${id},destino_label.ilike.%${s.nombre_paquete.split(' ')[0]}%`)
+          .order('orden', { ascending: true })
+          .limit(4);
+        const lista = (testis || []).filter((t) =>
+          t.salida_id === Number(id) ||
+          (s.nombre_paquete || '').toLowerCase().includes((t.destino_label || '').toLowerCase()) ||
+          (t.destino_label || '').toLowerCase().split(' ').some((w) => w.length > 3 && (s.nombre_paquete || '').toLowerCase().includes(w))
+        );
+        if (lista.length) {
+          function estrellas(n) {
+            const v = Math.min(5, Math.max(1, Number(n) || 5));
+            return '★'.repeat(v);
+          }
+          const cards = lista.map((t) => `
+            <article class="testi-card">
+              ${t.foto_url ? `<img src="${t.foto_url}" alt="" class="testi-foto" loading="lazy">` : `<div class="testi-foto testi-foto-placeholder">${t.emoji_destino || '✈️'}</div>`}
+              <div class="testi-body">
+                <div class="testi-estrellas">${estrellas(t.estrellas)}</div>
+                <blockquote class="testi-texto">"${t.texto}"</blockquote>
+                <footer class="testi-meta"><strong>${t.nombre_cliente}</strong>${t.anio ? ` · ${t.anio}` : ''}</footer>
+              </div>
+            </article>`).join('');
+          root.insertAdjacentHTML('beforeend', `
+            <section class="detalle-testimonios">
+              <h3>Experiencias de viajeros</h3>
+              <div class="testi-grid">${cards}</div>
+            </section>`);
+        }
       })();
     })();
   </script>
+  <script src="js/popup.js?v=20260621"></script>
 </body>
 </html>

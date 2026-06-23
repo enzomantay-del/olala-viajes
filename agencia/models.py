@@ -361,6 +361,88 @@ class Salida(models.Model):
         return [c for c in self.categorias if c in validas]
 
 
+class Testimonio(models.Model):
+    """Experiencia de un cliente — se muestra en la web pública."""
+    salida = models.ForeignKey(
+        Salida, on_delete=models.SET_NULL, null=True, blank=True,
+        verbose_name='Paquete vinculado', related_name='testimonios',
+    )
+    nombre_cliente = models.CharField('Nombre del viajero', max_length=100)
+    destino_label = models.CharField(
+        'Destino (etiqueta)', max_length=100, blank=True,
+        help_text='Ej: Europa, Bariloche. Se usa si no hay paquete vinculado.',
+    )
+    texto = models.TextField('Comentario')
+    foto = models.ImageField('Foto del viaje', upload_to='testimonios/', blank=True, null=True)
+    emoji_destino = models.CharField('Emoji', max_length=8, default='✈️', blank=True)
+    estrellas = models.PositiveSmallIntegerField('Estrellas', default=5)
+    anio = models.PositiveSmallIntegerField('Año del viaje', null=True, blank=True)
+    orden = models.PositiveIntegerField('Orden en la web', default=0)
+    visible = models.BooleanField('Visible en la web', default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Testimonio'
+        verbose_name_plural = 'Testimonios'
+        ordering = ['orden', '-created_at']
+
+    def __str__(self):
+        return f'{self.nombre_cliente} — {self.destino_label or self.salida}'
+
+
+class Popup(models.Model):
+    """Aviso modal en la web pública (se gestiona desde el panel)."""
+    titulo = models.CharField('Título', max_length=200)
+    mensaje = models.TextField(
+        'Mensaje',
+        help_text='Texto del aviso. Podés usar varias líneas.',
+    )
+    imagen = models.ImageField('Imagen (opcional)', upload_to='popups/', blank=True, null=True)
+    fecha_desde = models.DateField(
+        'Visible desde',
+        default=timezone.now,
+        help_text='Fecha en la que empieza a mostrarse.',
+    )
+    fecha_hasta = models.DateField(
+        'Visible hasta',
+        help_text='Después de esta fecha el aviso deja de mostrarse automáticamente.',
+    )
+    enlace_url = models.URLField('Enlace (opcional)', blank=True, help_text='Ej: WhatsApp, landing o paquete.')
+    enlace_texto = models.CharField('Texto del botón', max_length=80, blank=True, default='Ver más')
+    activo = models.BooleanField('Activo en la web', default=True)
+    orden = models.PositiveIntegerField(
+        'Prioridad',
+        default=0,
+        help_text='Si hay varios avisos vigentes, se muestra el de menor número (0 = primero).',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Popup'
+        verbose_name_plural = 'Popups'
+        ordering = ['orden', '-fecha_desde', '-created_at']
+
+    def __str__(self):
+        return self.titulo
+
+    @property
+    def esta_vigente(self):
+        hoy = timezone.localdate()
+        return self.activo and self.fecha_desde <= hoy <= self.fecha_hasta
+
+    @property
+    def estado_vigencia(self):
+        if not self.activo:
+            return 'inactivo'
+        hoy = timezone.localdate()
+        if hoy < self.fecha_desde:
+            return 'programado'
+        if hoy > self.fecha_hasta:
+            return 'vencido'
+        return 'vigente'
+
+
 class Voucher(models.Model):
     """Voucher de servicio emitido para una reserva"""
     numero = models.CharField('Nro. Voucher', max_length=20, unique=True, blank=True)

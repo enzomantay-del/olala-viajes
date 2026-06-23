@@ -22,7 +22,8 @@
   <meta name="twitter:image" content="https://olala-viajes.web.app/assets/og-catalogo.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/catalogo.css?v=20260615">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="css/catalogo.css?v=20260621">
 </head>
 <body>
 
@@ -31,6 +32,7 @@
   <ul class="nav-links">
     <li><a href="#asistente">Asistente</a></li>
     <li><a href="#paquetes">Paquetes</a></li>
+    <li><a href="#testimonios">Experiencias</a></li>
     <li><a href="#alertas">Alertas</a></li>
     <li><a href="#cotizar">Cotizar viaje</a></li>
     <li><a href="#como">¿Cómo funciona?</a></li>
@@ -43,6 +45,7 @@
 <div class="mobile-menu" id="mobile-menu">
   <a href="#asistente">Asistente</a>
   <a href="#paquetes">Paquetes</a>
+  <a href="#testimonios">Experiencias</a>
   <a href="#alertas">Alertas</a>
   <a href="#cotizar">Cotizar viaje</a>
   <a href="#como">¿Cómo funciona?</a>
@@ -106,12 +109,13 @@
     <div class="paquetes-header">
       <div>
         <div class="paquetes-titulo">Salidas programadas</div>
-        <div class="paquetes-sub">Precios por persona · Consultanos disponibilidad</div>
+        <div class="paquetes-sub">Precios por persona · <strong>+ Comparar</strong> en cada paquete (hasta 3) · Vista <strong>Mapa</strong> arriba</div>
       </div>
       <div class="paquetes-header-right">
         <div class="vista-toggle" role="tablist">
           <button type="button" class="vista-btn active" id="vista-lista" data-vista="lista">Lista</button>
           <button type="button" class="vista-btn" id="vista-calendario" data-vista="calendario">Calendario</button>
+          <button type="button" class="vista-btn" id="vista-mapa" data-vista="mapa">Mapa</button>
         </div>
         <span id="resultado-count">0 paquetes</span>
       </div>
@@ -126,6 +130,19 @@
     </div>
     <div id="vista-calendario-panel" class="vista-calendario-panel" hidden>
       <div id="calendario-app"></div>
+    </div>
+    <div id="vista-mapa-panel" class="vista-mapa-panel" hidden>
+      <div id="mapa-app"></div>
+    </div>
+  </div>
+</section>
+
+<section id="testimonios" class="testimonios-section">
+  <div class="testimonios-wrap">
+    <h2 class="testimonios-titulo">Experiencias de nuestros viajeros</h2>
+    <p class="testimonios-sub">Fotos y comentarios reales de clientes que ya viajaron con nosotros.</p>
+    <div id="testimonios-grid">
+      <p class="testi-cargando">Cargando experiencias…</p>
     </div>
   </div>
 </section>
@@ -288,18 +305,50 @@
 
 <div class="share-toast" id="share-toast">Enlace copiado</div>
 
+<div class="comparador-dock" id="comparador-dock" hidden>
+  <div class="comparador-dock-inner">
+    <span><strong id="comparador-dock-count">0</strong> / 3 paquetes seleccionados</span>
+    <div class="comparador-dock-btns">
+      <button type="button" class="btn-ghost-asistente" id="btn-limpiar-comparador">Limpiar</button>
+      <button type="button" class="btn-naranja" id="btn-abrir-comparador" disabled>Comparar</button>
+    </div>
+  </div>
+</div>
+
+<div class="aviso-popup" id="aviso-popup" hidden aria-modal="true" role="dialog" aria-labelledby="aviso-popup-titulo">
+  <div class="aviso-popup-box">
+    <button type="button" class="aviso-popup-close" id="aviso-popup-cerrar" aria-label="Cerrar">×</button>
+    <div id="aviso-popup-contenido"></div>
+  </div>
+</div>
+
+<div class="comparador-modal" id="comparador-modal" hidden>
+  <div class="comparador-modal-box">
+    <div class="comparador-modal-header">
+      <h3>Comparar paquetes</h3>
+      <button type="button" class="comparador-modal-close" id="btn-cerrar-comparador" aria-label="Cerrar">×</button>
+    </div>
+    <div id="comparador-modal-body" class="comparador-modal-body"></div>
+  </div>
+</div>
+
 <a class="wa-float" id="wa-float" href="#" target="_blank" rel="noopener" aria-label="WhatsApp">
   <svg viewBox="0 0 32 32"><path d="M16 2C8.268 2 2 8.268 2 16c0 2.493.651 4.835 1.787 6.865L2 30l7.353-1.768A13.94 13.94 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2z"/></svg>
 </a>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="js/supabase-config.js?v=20260609"></script>
 <script src="js/catalogo-util.js?v=20260615"></script>
-<script src="js/catalogo.js?v=20260615"></script>
+<script src="js/catalogo.js?v=20260619"></script>
+<script src="js/comparador.js?v=20260619"></script>
 <script src="js/asistente.js?v=20260615"></script>
 <script src="js/calendario.js?v=20260615"></script>
-<script src="js/alertas.js?v=20260615"></script>
+<script src="js/mapa.js?v=20260619"></script>
+<script src="js/testimonios.js?v=20260618"></script>
+<script src="js/alertas.js?v=20260617"></script>
 <script src="js/cotizar.js?v=20260613"></script>
+<script src="js/popup.js?v=20260621"></script>
 <script>
   const wa = 'https://wa.me/' + (window.OLALA_WHATSAPP || '5493743483429');
   const msg = '?text=' + encodeURIComponent('Hola! Quiero consultar sobre los paquetes de Olalá Viajes.');
@@ -327,17 +376,22 @@
 
   const vistaLista = document.getElementById('vista-lista');
   const vistaCal = document.getElementById('vista-calendario');
+  const vistaMapa = document.getElementById('vista-mapa');
   const panelLista = document.getElementById('vista-lista-panel');
   const panelCal = document.getElementById('vista-calendario-panel');
+  const panelMapa = document.getElementById('vista-mapa-panel');
   function setVista(v) {
-    const esLista = v === 'lista';
-    vistaLista?.classList.toggle('active', esLista);
-    vistaCal?.classList.toggle('active', !esLista);
-    if (panelLista) panelLista.hidden = !esLista;
-    if (panelCal) panelCal.hidden = esLista;
+    vistaLista?.classList.toggle('active', v === 'lista');
+    vistaCal?.classList.toggle('active', v === 'calendario');
+    vistaMapa?.classList.toggle('active', v === 'mapa');
+    if (panelLista) panelLista.hidden = v !== 'lista';
+    if (panelCal) panelCal.hidden = v !== 'calendario';
+    if (panelMapa) panelMapa.hidden = v !== 'mapa';
+    if (v === 'mapa') document.dispatchEvent(new CustomEvent('olala:vista-mapa'));
   }
   vistaLista?.addEventListener('click', () => setVista('lista'));
   vistaCal?.addEventListener('click', () => setVista('calendario'));
+  vistaMapa?.addEventListener('click', () => setVista('mapa'));
 </script>
 </body>
 </html>

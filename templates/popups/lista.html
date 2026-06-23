@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Popups web{% endblock %}
+{% block topbar_title %}Popups web{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2><i class="fas fa-bullhorn me-2 text-teal"></i>Popups en la web</h2>
+  <a href="{% url 'popup_nuevo' %}" class="btn btn-teal"><i class="fas fa-plus me-1"></i>Nuevo popup</a>
+</div>
+
+<div class="alert alert-info">
+  <i class="fas fa-info-circle me-1"></i>
+  Los avisos se muestran <strong>cada vez que alguien entra al sitio</strong> mientras estén vigentes.
+  Después de la fecha límite dejan de aparecer solos. Podés desactivarlos o eliminarlos cuando quieras.
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Vigencia</th>
+            <th>Estado</th>
+            <th>Prioridad</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in popups %}
+          <tr>
+            <td>
+              <strong>{{ p.titulo }}</strong>
+              {% if p.imagen %}
+              <br><small class="text-muted"><i class="fas fa-image"></i> Con imagen</small>
+              {% endif %}
+            </td>
+            <td>
+              <small>{{ p.fecha_desde|date:"d/m/Y" }} — {{ p.fecha_hasta|date:"d/m/Y" }}</small>
+            </td>
+            <td>
+              {% if p.estado_vigencia == 'vigente' %}
+              <span class="badge bg-success">Vigente</span>
+              {% elif p.estado_vigencia == 'programado' %}
+              <span class="badge bg-primary">Programado</span>
+              {% elif p.estado_vigencia == 'vencido' %}
+              <span class="badge bg-secondary">Vencido</span>
+              {% else %}
+              <span class="badge bg-warning text-dark">Inactivo</span>
+              {% endif %}
+            </td>
+            <td>{{ p.orden }}</td>
+            <td class="text-center text-nowrap">
+              <a href="{% url 'popup_editar' p.pk %}" class="btn btn-sm btn-outline-secondary" title="Editar">
+                <i class="fas fa-edit"></i>
+              </a>
+              <a href="{% url 'popup_eliminar' p.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                <i class="fas fa-trash"></i>
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-4">
+              No hay popups. Creá uno para mostrar promos o avisos en la web.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

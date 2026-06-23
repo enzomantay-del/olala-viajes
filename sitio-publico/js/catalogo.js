@@ -118,7 +118,10 @@
           <div class="paq-spacer"></div>
           <div class="paq-footer">
             ${precio}
-            <button class="btn-consultar" type="button" data-consulta="${escapeHtml(s.nombre_paquete)} — ${fechaLegible(s.fecha_salida)}">Consultar</button>
+            <div class="paq-footer-btns">
+              <button type="button" class="btn-comparar" data-id="${s.id}" aria-pressed="false">+ Comparar</button>
+              <button class="btn-consultar" type="button" data-consulta="${escapeHtml(s.nombre_paquete)} — ${fechaLegible(s.fecha_salida)}">Consultar</button>
+            </div>
           </div>
         </div>
       </div>`;
@@ -195,6 +198,11 @@
         }
       });
     });
+    document.querySelectorAll('.btn-comparar').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (window.OlalaComparador) window.OlalaComparador.toggle(btn.dataset.id);
+      });
+    });
     document.querySelectorAll('.paq-card').forEach((card) => {
       const extras = card.querySelectorAll('.servicio-extra');
       const btn = card.querySelector('.btn-ver-mas');
@@ -233,6 +241,7 @@
       grilla.innerHTML = salidas.map(cardHtml).join('');
       bindCards();
       filtrar('todos', document.querySelector('.filtro-btn.active'));
+      if (window.OlalaComparador) window.OlalaComparador.actualizarDock();
     }
     document.dispatchEvent(new CustomEvent('olala:salidas-cargadas', { detail: salidas }));
     const shareBtn = document.getElementById('btn-compartir-catalogo');

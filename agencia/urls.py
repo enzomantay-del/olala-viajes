@@ -77,4 +77,10 @@ urlpatterns = [
     path('salidas/<int:pk>/editar/', login_required(views.salida_editar), name='salida_editar'),
     path('salidas/<int:pk>/flyer/', login_required(views.salida_flyer), name='salida_flyer'),
     path('salidas/<int:pk>/eliminar/', login_required(views.salida_eliminar), name='salida_eliminar'),
+
+    # Popups (avisos en la web)
+    path('popups/', login_required(views.popups_lista), name='popups_lista'),
+    path('popups/nuevo/', login_required(views.popup_nuevo), name='popup_nuevo'),
+    path('popups/<int:pk>/editar/', login_required(views.popup_editar), name='popup_editar'),
+    path('popups/<int:pk>/eliminar/', login_required(views.popup_eliminar), name='popup_eliminar'),
 ]

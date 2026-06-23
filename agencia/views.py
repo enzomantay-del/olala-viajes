@@ -10,8 +10,8 @@ from decimal import Decimal
 
 from django.conf import settings as django_settings
 
-from .models import Cliente, Proveedor, Reserva, ServicioReserva, Cobro, PagoProveedor, Recibo, Voucher, Salida, SIMBOLOS_MONEDA
-from .forms import ClienteForm, ProveedorForm, ReservaForm, ServicioFormSet, CobroForm, PagoProveedorForm, ReciboForm, VoucherForm, SalidaForm
+from .models import Cliente, Proveedor, Reserva, ServicioReserva, Cobro, PagoProveedor, Recibo, Voucher, Salida, Popup, SIMBOLOS_MONEDA
+from .forms import ClienteForm, ProveedorForm, ReservaForm, ServicioFormSet, CobroForm, PagoProveedorForm, ReciboForm, VoucherForm, SalidaForm, PopupForm
 from .pdf_utils import generar_recibo_pdf, generar_voucher_pdf, generar_salidas_pdf
 from .salidas_utils import categorizar_salida, categorizar_salidas
 from .og_catalogo import contexto_og_catalogo
@@ -964,3 +964,43 @@ def salidas_pdf(request):
     buffer = generar_salidas_pdf(salidas, filtros=filtros)
     return HttpResponse(buffer, content_type='application/pdf',
                         headers={'Content-Disposition': 'inline; filename="salidas.pdf"'})
+
+
+def popups_lista(request):
+    popups = list(Popup.objects.all())
+    hoy = timezone.localdate()
+    return render(request, 'popups/lista.html', {'popups': popups, 'hoy': hoy})
+
+
+def popup_nuevo(request):
+    if request.method == 'POST':
+        form = PopupForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Popup guardado. Se publicará en la web en unos segundos.')
+            return redirect('popups_lista')
+    else:
+        form = PopupForm()
+    return render(request, 'popups/formulario.html', {'form': form, 'titulo': 'Nuevo popup'})
+
+
+def popup_editar(request, pk):
+    popup = get_object_or_404(Popup, pk=pk)
+    if request.method == 'POST':
+        form = PopupForm(request.POST, request.FILES, instance=popup)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Popup actualizado.')
+            return redirect('popups_lista')
+    else:
+        form = PopupForm(instance=popup)
+    return render(request, 'popups/formulario.html', {'form': form, 'titulo': 'Editar popup', 'popup': popup})
+
+
+def popup_eliminar(request, pk):
+    popup = get_object_or_404(Popup, pk=pk)
+    if request.method == 'POST':
+        popup.delete()
+        messages.success(request, 'Popup eliminado.')
+        return redirect('popups_lista')
+    return render(request, 'popups/confirmar_eliminar.html', {'popup': popup})

@@ -1,5 +1,21 @@
 from django.contrib import admin
-from .models import Cliente, Proveedor, Reserva, Cobro, PagoProveedor, Recibo, Voucher, Salida
+from .models import Cliente, Proveedor, Reserva, Cobro, PagoProveedor, Recibo, Voucher, Salida, Testimonio, Popup
+
+
+@admin.register(Popup)
+class PopupAdmin(admin.ModelAdmin):
+    list_display = ('titulo', 'fecha_desde', 'fecha_hasta', 'activo', 'orden')
+    list_filter = ('activo',)
+    search_fields = ('titulo', 'mensaje')
+    ordering = ('orden', '-fecha_desde')
+
+
+@admin.register(Testimonio)
+class TestimonioAdmin(admin.ModelAdmin):
+    list_display = ('nombre_cliente', 'destino_label', 'salida', 'estrellas', 'visible', 'orden')
+    list_filter = ('visible', 'estrellas')
+    search_fields = ('nombre_cliente', 'destino_label', 'texto')
+    ordering = ('orden', '-created_at')
 
 
 @admin.register(Salida)

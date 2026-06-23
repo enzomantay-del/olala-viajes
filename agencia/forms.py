@@ -1,7 +1,8 @@
 from django import forms
 from django.forms import inlineformset_factory
 from django.utils import timezone
-from .models import Cliente, Proveedor, Reserva, ServicioReserva, Cobro, PagoProveedor, Recibo, Voucher, Salida, MONEDAS
+from datetime import timedelta
+from .models import Cliente, Proveedor, Reserva, ServicioReserva, Cobro, PagoProveedor, Recibo, Voucher, Salida, Popup, MONEDAS
 
 
 class ClienteForm(forms.ModelForm):
@@ -201,3 +202,51 @@ class SalidaForm(forms.ModelForm):
         if not categorias:
             raise forms.ValidationError('Elegí al menos una categoría.')
         return categorias
+
+
+class PopupForm(forms.ModelForm):
+    class Meta:
+        model = Popup
+        fields = [
+            'titulo', 'mensaje', 'imagen', 'fecha_desde', 'fecha_hasta',
+            'enlace_url', 'enlace_texto', 'activo', 'orden',
+        ]
+        widgets = {
+            'titulo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Promo Vacaciones de Invierno',
+            }),
+            'mensaje': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 5,
+                'placeholder': 'Escribí el mensaje que verán los visitantes al entrar al sitio...',
+            }),
+            'imagen': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'fecha_desde': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+            'fecha_hasta': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}, format='%Y-%m-%d'),
+            'enlace_url': forms.URLInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'https://...',
+            }),
+            'enlace_texto': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ver más',
+            }),
+            'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'orden': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        hoy = timezone.localdate()
+        if not self.instance.pk:
+            self.fields['fecha_desde'].initial = hoy
+            self.fields['fecha_hasta'].initial = hoy + timedelta(days=14)
+
+    def clean(self):
+        cleaned = super().clean()
+        desde = cleaned.get('fecha_desde')
+        hasta = cleaned.get('fecha_hasta')
+        if desde and hasta and hasta < desde:
+            raise forms.ValidationError('La fecha "Visible hasta" no puede ser anterior a "Visible desde".')
+        return cleaned
