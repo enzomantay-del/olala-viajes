@@ -133,20 +133,25 @@ def _sync_popup_en_segundo_plano(popup_pk):
         popup = Popup.objects.get(pk=popup_pk)
         sincronizar_popup(popup)
     except Exception:
-        pass
+        import logging
+        logging.getLogger(__name__).exception('Sync popup %s', popup_pk)
 
 
 @receiver(post_save, sender=Popup)
 def popup_guardado_sync(sender, instance, **kwargs):
+    from django.db import transaction
     from .popups_sync import supabase_configurado
 
     if not supabase_configurado():
         return
-    threading.Thread(
-        target=_sync_popup_en_segundo_plano,
-        args=(instance.pk,),
-        daemon=True,
-    ).start()
+    pk = instance.pk
+    transaction.on_commit(
+        lambda: threading.Thread(
+            target=_sync_popup_en_segundo_plano,
+            args=(pk,),
+            daemon=True,
+        ).start()
+    )
 
 
 @receiver(post_delete, sender=Popup)

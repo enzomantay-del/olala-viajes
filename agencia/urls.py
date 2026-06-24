@@ -82,5 +82,6 @@ urlpatterns = [
     path('popups/', login_required(views.popups_lista), name='popups_lista'),
     path('popups/nuevo/', login_required(views.popup_nuevo), name='popup_nuevo'),
     path('popups/<int:pk>/editar/', login_required(views.popup_editar), name='popup_editar'),
+    path('popups/<int:pk>/republicar/', login_required(views.popup_republicar), name='popup_republicar'),
     path('popups/<int:pk>/eliminar/', login_required(views.popup_eliminar), name='popup_eliminar'),
 ]

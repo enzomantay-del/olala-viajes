@@ -976,8 +976,11 @@ def popup_nuevo(request):
     if request.method == 'POST':
         form = PopupForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Popup guardado. Se publicará en la web en unos segundos.')
+            popup = form.save()
+            messages.success(
+                request,
+                'Popup guardado. La imagen puede tardar unos segundos en publicarse en la web.',
+            )
             return redirect('popups_lista')
     else:
         form = PopupForm()
@@ -990,7 +993,10 @@ def popup_editar(request, pk):
         form = PopupForm(request.POST, request.FILES, instance=popup)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Popup actualizado.')
+            messages.success(
+                request,
+                'Popup actualizado. Si cambiaste la imagen, esperá unos segundos y refrescá la web.',
+            )
             return redirect('popups_lista')
     else:
         form = PopupForm(instance=popup)
@@ -1004,3 +1010,18 @@ def popup_eliminar(request, pk):
         messages.success(request, 'Popup eliminado.')
         return redirect('popups_lista')
     return render(request, 'popups/confirmar_eliminar.html', {'popup': popup})
+
+
+def popup_republicar(request, pk):
+    from .popups_sync import sincronizar_popup, supabase_configurado
+
+    popup = get_object_or_404(Popup, pk=pk)
+    if not supabase_configurado():
+        messages.error(request, 'Supabase no está configurado en el servidor.')
+        return redirect('popups_lista')
+    try:
+        sincronizar_popup(popup)
+        messages.success(request, f'「{popup.titulo}」 republicado en la web con su imagen.')
+    except Exception as exc:
+        messages.error(request, f'No se pudo republicar: {exc}')
+    return redirect('popups_lista')

@@ -26,6 +26,7 @@
           <div class="col-12">
             <label class="form-label">Imagen (opcional)</label>
             {{ form.imagen }}
+            <small class="text-muted d-block">JPG o PNG, idealmente menos de 1 MB. La subida puede tardar unos segundos.</small>
             {% if popup and popup.imagen %}
             <div class="mt-2">
               <img src="{{ popup.imagen.url }}" alt="" style="max-height:120px;border-radius:8px;">
@@ -75,9 +76,19 @@
 
       <div class="d-flex gap-2 justify-content-end">
         <a href="{% url 'popups_lista' %}" class="btn btn-outline-secondary">Cancelar</a>
-        <button type="submit" class="btn btn-teal"><i class="fas fa-save me-1"></i>Guardar</button>
+        <button type="submit" class="btn btn-teal" id="btn-guardar-popup">
+          <i class="fas fa-save me-1"></i>Guardar
+        </button>
       </div>
     </form>
   </div>
 </div>
+<script>
+  document.querySelector('form')?.addEventListener('submit', function () {
+    const btn = document.getElementById('btn-guardar-popup');
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Guardando…';
+  });
+</script>
 {% endblock %}

@@ -51,6 +51,9 @@
             </td>
             <td>{{ p.orden }}</td>
             <td class="text-center text-nowrap">
+              <a href="{% url 'popup_republicar' p.pk %}" class="btn btn-sm btn-outline-secondary" title="Republicar en web (sube imagen)">
+                <i class="fas fa-cloud-upload-alt"></i>
+              </a>
               <a href="{% url 'popup_editar' p.pk %}" class="btn btn-sm btn-outline-secondary" title="Editar">
                 <i class="fas fa-edit"></i>
               </a>
