@@ -122,12 +122,12 @@
             <div class="d-flex justify-content-between align-items-start">
               <div>
                 <strong>{{ r.cliente }}</strong>
-                <div class="small text-muted">{{ r.destino }} — {{ r.get_tipo_servicio_display }}</div>
+                <div class="small text-muted">{{ r.destino }}{% if r.get_tipo_servicio_display %} — {{ r.get_tipo_servicio_display }}{% endif %}</div>
                 <div class="small">Reserva: <b>{{ r.numero }}</b></div>
               </div>
               <div class="text-end">
                 <span class="badge bg-orange">{{ r.fecha_salida|date:"d/m/Y" }}</span>
-                <div class="small text-muted mt-1">{{ r.proveedor }}</div>
+                <div class="small text-muted mt-1">{{ r.proveedor|default:"" }}</div>
               </div>
             </div>
           </a>
@@ -216,11 +216,11 @@
               <tr>
                 <td><a href="{% url 'reserva_detalle' r.pk %}">{{ r.numero }}</a></td>
                 <td>{{ r.cliente }}</td>
-                <td>{{ r.proveedor }}</td>
+                <td>{{ r.proveedor|default:"—" }}</td>
                 <td class="small">{{ r.destino }}</td>
                 <td class="small">{{ r.fecha_salida|date:"d/m/Y" }}</td>
                 <td class="text-end saldo-pendiente">
-                  {{ r.moneda_costo }} {{ r.saldo_pendiente_proveedor|floatformat:2 }}
+                  {{ r.moneda_venta }} {{ r.saldo_pendiente_proveedor|floatformat:2 }}
                 </td>
               </tr>
               {% endfor %}

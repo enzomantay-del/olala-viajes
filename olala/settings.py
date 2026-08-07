@@ -110,6 +110,15 @@ TIME_ZONE = 'America/Argentina/Buenos_Aires'
 USE_I18N = True
 USE_TZ = True
 
+# Cache en memoria: evita repetir alertas/fotos en cada click del panel.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'olala-panel',
+        'TIMEOUT': 120,
+    }
+}
+
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -143,9 +152,9 @@ WEB_EXPORT_DIR = BASE_DIR / 'web-export'
 
 # Datos de la agencia
 AGENCIA_NOMBRE = 'Olalá Viajes'
-AGENCIA_LEG = '14923'
-AGENCIA_DISP = '1475/2011'
-AGENCIA_EMAIL = 'enzomantay@gmail.com'
+AGENCIA_LEG = '19028'
+AGENCIA_DISP = ''
+AGENCIA_EMAIL = 'ventas@olalaviajes.tur.ar'
 COTIZACION_EMAIL = os.environ.get('COTIZACION_EMAIL', AGENCIA_EMAIL)
 
 EMAIL_BACKEND = os.environ.get(
@@ -165,7 +174,7 @@ AGENCIA_DIRECCION = 'Jardín América, Misiones, Argentina'
 # URL pública del catálogo (Firebase Hosting + Supabase)
 PUBLIC_WEB_BASE_URL = os.environ.get(
     'PUBLIC_WEB_BASE_URL',
-    'https://olala-viajes.web.app',
+    'https://olalaviajes.tur.ar',
 ).rstrip('/')
 
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '').strip()
